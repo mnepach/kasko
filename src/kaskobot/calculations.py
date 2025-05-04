@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date
-import kaskobot.res.values as prg
+import res.values as prg
 
 def define_vehicle_age(vehYear):
     _curYear = date.today().year
