@@ -9,7 +9,7 @@ def get_vehicle_year():
     return int(vehicleYear)
 
 def get_vehicle_price():
-    vehiclePrice = input ("Price \n")
+    vehiclePrice = input (msg.VEHICLE_PRICE_PROMPT + ": \n")
     return int(vehiclePrice)
 
 curUser = rates.UserInfo()
@@ -17,12 +17,5 @@ vehicleYear = get_vehicle_year()
 vehiclePrice = get_vehicle_price()
 curUser.set_vehicle_info(vehicleYear, vehiclePrice)
 curUser.set_rates_from_programs()
-#yearIndex = calc.define_vehicle_age(vehicleYear)
-#priceIndex=calc.define_price_index(vehiclePrice)
-#optima = rates.ProgramRates()
-#print(rates.OPTIMA.program_rates_table)
-#user_rate = rates.ProgramRates.get_rate_from_program(
-#    rates.OPTIMA_A_RATES, yearIndex, priceIndex
-#    )
-#rates.set_rates_for_user(curUser, yearIndex, priceIndex)
-print(curUser.rate_from_program)
+curUser.calc_summary_values()
+print(curUser.total_for_program)
