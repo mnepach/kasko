@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+
 import res.values as prg
-import calculations as calc
+import kaskobot.calculations as calc
 
 class ProgramInfo:
     _program_name = ""
@@ -10,9 +11,11 @@ class ProgramInfo:
         for i in range(0, len(list_a)):
             self._program_rates_a[str(i)] = list_a[i]
     
+    '''
     def get_rate_from_program(program, year, price):
         _rate_from_program = program._program_rates_a[year][price]
         return float(_rate_from_program)
+        '''
 
 class UserInfo:
     vehicle_year = 0

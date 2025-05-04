@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date
-import res.values as prg
+from res import values as prg
 
 def define_vehicle_age(vehYear):
     _curYear = date.today().year
@@ -27,7 +27,9 @@ def define_price_index(vehPrice):
         _vehPriceIndex = -1
     return int(_vehPriceIndex)
 
+'''
 def calc_summary_value(user_rates):
     _base = prg.BASE_VALUE
     _summary_value = _base*user_rates
     return float(_summary_value)
+'''
