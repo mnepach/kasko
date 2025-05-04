@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+
+BASE_VALUE = 42
+
+VEHICLE_PRICE_LIMIT_1 = 15000
+VEHICLE_PRICE_LIMIT_2 = 30000
+VEHICLE_PRICE_LIMIT_3 = 50000
+
+OPTIMA_A =  [
+    [1.23, 5.17, 3.56],
+    [2.95, 8.45, 6.44]
+]
