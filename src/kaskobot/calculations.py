@@ -15,7 +15,7 @@ def define_price_index(vehPrice):
     _PRICE_LIMIT_2 = int(prg.VEHICLE_PRICE_LIMIT_2)
     _PRICE_LIMIT_3 = int(prg.VEHICLE_PRICE_LIMIT_3)
 
-    if ((vehPrice >= 0) and (vehPrice <= _PRICE_LIMIT_1)):
+    if ((vehPrice > 0) and (vehPrice <= _PRICE_LIMIT_1)):
         _vehPriceIndex = 0
     elif ((vehPrice > _PRICE_LIMIT_1) and (vehPrice <= _PRICE_LIMIT_2)):
         _vehPriceIndex = 1

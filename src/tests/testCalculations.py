@@ -9,7 +9,7 @@ class TestCalculations(unittest.TestCase):
         return super().setUp()
     
     def test_define_price_index_0(self):
-        _test_values = [0, 10000, 14999, 15000]
+        _test_values = [1, 10000, 14999, 15000]
         for i in _test_values:
             with self.subTest(price=i):
                 self.assertEqual(self.calcTstObj.define_price_index(i), 0)
