@@ -12,7 +12,7 @@ def get_vehicle_price():
     vehiclePrice = input ("Price \n")
     return int(vehiclePrice)
 
-curUser = rates.UserRates()
+curUser = rates.UserInfo()
 vehicleYear = get_vehicle_year()
 vehiclePrice = get_vehicle_price()
 curUser.set_vehicle_info(vehicleYear, vehiclePrice)
