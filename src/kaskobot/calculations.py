@@ -20,7 +20,7 @@ def define_price_index(vehPrice):
     elif ((vehPrice > _PRICE_LIMIT_1) and (vehPrice <= _PRICE_LIMIT_2)):
         _vehPriceIndex = 1
     elif ((vehPrice > _PRICE_LIMIT_2) and (vehPrice <= _PRICE_LIMIT_3)):
-        _vehPriceIndex = 1
+        _vehPriceIndex = 2
     elif (vehPrice > _PRICE_LIMIT_3):
         _vehPriceIndex = 3
     else:
