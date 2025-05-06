@@ -9,10 +9,6 @@ class Insurance:
         'year': 0,
         'price': 0
     }
-    meta_data = {
-        'year_index': 0,
-        'price_index': 0
-        }
     rates_from_programs = []
     totals_for_programs = []
 
@@ -22,18 +18,13 @@ class Insurance:
     def set_vehicle_info(self, year, price):
         self.vehicle_data['year'] = year
         self.vehicle_data['price'] = price
-        self.meta_data['year_index'] = str(calc.define_age(year))
-        self.meta_data['price_index'] = calc.define_price_index(price)
-        self.year_index = str(calc.define_age(year))
-        self.price_index = calc.define_price_index(price)
-         
+        
     def set_rates_from_programs(self):
         _all_programs = prg.AVAILABLE_PROGRAMS
         for i in _all_programs:
-            _rate_from_program =\
-                  i._program_rates_a\
-                    [self.meta_data['year_index']]\
-                        [self.meta_data['price_index']]
+            _year = self.vehicle_data['year'] 
+            _price = self.vehicle_data['price']
+            _rate_from_program = i.get_rate_from_program(_year, _price)
             self.rates_from_programs.append(_rate_from_program)
 
     def calc_summary_values(self):
