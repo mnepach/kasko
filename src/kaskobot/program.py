@@ -18,8 +18,6 @@ class Program:
             self._program_rates_a[str(i)] = list_a[i]
 
     def get_rate_from_program(self, year, price):
-        #_row_number = str(calc.define_age(year))
-        #_column_number = calc.define_price_index(price)
         _row_number = self.define_vehicle_age_row_number(year)
         _column_number = self.define_price_column_number(price)
         _rate = self._program_rates_a[_row_number][_column_number]
@@ -37,10 +35,10 @@ class Program:
                     _price_column_number = i + 1
         return int(_price_column_number)
 
-OPTIMA_A_RATES = Program(values.OPTIMA_A)
-PROFIT_A_RATES = Program(values.PROFIT_A)
+OPTIMA = Program(values.OPTIMA_A_RATES)
+PROFIT = Program(values.PROFIT_A_RATES)
 
 AVAILABLE_PROGRAMS = [
-    OPTIMA_A_RATES, 
-    PROFIT_A_RATES
+    OPTIMA, 
+    PROFIT
     ]
