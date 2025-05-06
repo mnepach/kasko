@@ -2,7 +2,6 @@
 
 from res import messages as msg
 import kaskobot.rates as rates
-#import kaskobot.calculations as calc
 
 def get_vehicle_year():
     vehicleYear = input (msg.VEHICLE_YEAR_PROMPT + ": \n")
@@ -13,11 +12,11 @@ def get_vehicle_price():
     return int(vehiclePrice)
 
 def run_bot():
-    curUser = rates.UserInfo()
+    curInsurance = rates.InsuranceInfo()
     vehicleYear = get_vehicle_year()
     vehiclePrice = get_vehicle_price()
-    curUser.set_vehicle_info(vehicleYear, vehiclePrice)
-    curUser.set_rates_from_programs()
-    curUser.calc_summary_values()
-    print(curUser.total_for_program)
+    curInsurance.set_vehicle_info(vehicleYear, vehiclePrice)
+    curInsurance.set_rates_from_programs()
+    curInsurance.calc_summary_values()
+    print(curInsurance.totals_for_programs)
 

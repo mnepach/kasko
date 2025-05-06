@@ -17,27 +17,36 @@ class ProgramInfo:
         return float(_rate_from_program)
         '''
 
-class UserInfo:
-    vehicle_year = 0
-    year_index = 0
-    vehicle_price = 0
-    price_index = 0
+class InsuranceInfo:
+    vehicle_data = {
+        'year': 0,
+        'price': 0
+    }
+    meta_data = {
+        'year_index': 0,
+        'price_index': 0
+        }
     rates_from_programs = []
-    total_for_program = []
+    totals_for_programs = []
 
-    def __init_(self):
+    def __init__(self):
         pass
         
     def set_vehicle_info(self, year, price):
-         self.vehicle_year = year
-         self.vehicle_price = price
-         self.year_index = calc.define_vehicle_age(year)
-         self.price_index = calc.define_price_index(price)
+        self.vehicle_data['year'] = year
+        self.vehicle_data['price'] = price
+        self.meta_data['year_index'] = str(calc.define_age(year))
+        self.meta_data['price_index'] = calc.define_price_index(price)
+        self.year_index = str(calc.define_age(year))
+        self.price_index = calc.define_price_index(price)
          
     def set_rates_from_programs(self):
         _all_programs = AVAILABLE_PROGRAMS
         for i in _all_programs:
-            _rate_from_program = i._program_rates_a[self.year_index][self.price_index]
+            _rate_from_program =\
+                  i._program_rates_a\
+                    [self.meta_data['year_index']]\
+                        [self.meta_data['price_index']]
             self.rates_from_programs.append(_rate_from_program)
 
     def calc_summary_values(self):
@@ -45,7 +54,7 @@ class UserInfo:
         for i in range(0, len(self.rates_from_programs)):
             _rate = self.rates_from_programs[i]
             _total_for_program = _base * _rate
-            self.total_for_program.append(_total_for_program)
+            self.totals_for_programs.append(_total_for_program)
     
 OPTIMA_A_RATES = ProgramInfo (prg.OPTIMA_A)
 PROFIT_A_RATES = ProgramInfo (prg.PROFIT_A)
