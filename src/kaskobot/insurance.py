@@ -1,23 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import res.values as prg
+import res.values as values
 import kaskobot.calculations as calc
+import kaskobot.program as prg
 
-class ProgramInfo:
-    _program_name = ""
-    def __init__(self, list_a):
-        self._program_rates_a = {}
-        self._program_rates_b = {}
-        for i in range(0, len(list_a)):
-            self._program_rates_a[str(i)] = list_a[i]
-    
-    '''
-    def get_rate_from_program(program, year, price):
-        _rate_from_program = program._program_rates_a[year][price]
-        return float(_rate_from_program)
-        '''
-
-class InsuranceInfo:
+class Insurance:
     vehicle_data = {
         'year': 0,
         'price': 0
@@ -41,7 +28,7 @@ class InsuranceInfo:
         self.price_index = calc.define_price_index(price)
          
     def set_rates_from_programs(self):
-        _all_programs = AVAILABLE_PROGRAMS
+        _all_programs = prg.AVAILABLE_PROGRAMS
         for i in _all_programs:
             _rate_from_program =\
                   i._program_rates_a\
@@ -50,17 +37,10 @@ class InsuranceInfo:
             self.rates_from_programs.append(_rate_from_program)
 
     def calc_summary_values(self):
-        _base = prg.BASE_VALUE
+        _base = values.BASE_VALUE
         for i in range(0, len(self.rates_from_programs)):
             _rate = self.rates_from_programs[i]
             _total_for_program = _base * _rate
             self.totals_for_programs.append(_total_for_program)
     
-OPTIMA_A_RATES = ProgramInfo (prg.OPTIMA_A)
-PROFIT_A_RATES = ProgramInfo (prg.PROFIT_A)
-AVAILABLE_PROGRAMS = [
-    OPTIMA_A_RATES, 
-    PROFIT_A_RATES
-    ]
-
 
