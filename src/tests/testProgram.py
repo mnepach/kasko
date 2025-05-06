@@ -2,11 +2,11 @@
 
 import unittest
 import res.values as values
-import kaskobot.program as prg
+from kaskobot.program import Program
 
 class TestProgram(unittest.TestCase):
     def setUp(self):
-        self.prgTstObj = prg.Program(values.OPTIMA_A_RATES)
+        self.prgTstObj = Program(values.OPTIMA_A_RATES)
         return super().setUp()
     
     def test_define_price_culumn_number_0(self):
