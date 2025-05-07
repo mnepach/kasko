@@ -19,15 +19,15 @@ def get_territory_info():
         _rb_only = True
     elif (_answer == 'N'):
         _rb_only = False
-    print (_rb_only)
     return (_rb_only)
 
 def run_bot():
     curInsurance = Insurance()
     vehicleYear = get_vehicle_year()
     vehiclePrice = get_vehicle_price()
-    territory_info = get_territory_info()
-    curInsurance.set_territory_rate(territory_info)
+    territory_ind = get_territory_info()
+    #curInsurance.set_territory_rate(territory_info)
+    curInsurance.set_rb_only(territory_ind)
     curInsurance.set_vehicle_info(vehicleYear, vehiclePrice)
     curInsurance.set_rates_from_programs()
     curInsurance.calc_summary_values()
