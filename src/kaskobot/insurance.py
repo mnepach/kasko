@@ -6,7 +6,7 @@ import kaskobot.program as prg
 
 class Insurance:
     vehicle_data = {
-        'year': 0,
+        'prod_year': 0,
         'price': 0
     }
     rates_from_programs = []
@@ -16,8 +16,10 @@ class Insurance:
     def __init__(self):
         pass
         
-    def set_vehicle_info(self, year, price):
-        self.vehicle_data['year'] = year
+    def set_vehicle_production_year(self, year):
+        self.vehicle_data['prod_year'] = year
+
+    def set_vehicle_price(self, price):
         self.vehicle_data['price'] = price
 
     def set_rb_only(self, rb_only_indicator):
@@ -33,9 +35,10 @@ class Insurance:
     def set_rates_from_programs(self):
         _all_programs = prg.AVAILABLE_PROGRAMS
         for i in _all_programs:
-            _year = self.vehicle_data['year'] 
-            _price = self.vehicle_data['price']
-            _rate_from_program = i.get_rate_from_program(_year, _price)
+            _vehicle_year = self.vehicle_data['prod_year'] 
+            _vehicle_price = self.vehicle_data['price']
+            _rate_from_program = i.get_rate_from_program(_vehicle_year, 
+                                                         _vehicle_price)
             self.rates_from_programs.append(_rate_from_program)
 
     def calc_summary_values(self):

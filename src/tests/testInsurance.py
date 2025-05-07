@@ -9,14 +9,17 @@ class TestProgram(unittest.TestCase):
         self.insTstObj = Insurance()
         return super().setUp()
     
-    def test_set_vehicle_info(self):
-        _year = 2024
-        _price = 14236
-        self.insTstObj.set_vehicle_info(_year, _price)
-        with self.subTest(year=_year):
-            self.assertEqual(self.insTstObj.vehicle_data['year'], _year)
-        with self.subTest(price=_price):
-            self.assertEqual(self.insTstObj.vehicle_data['price'], _price)
+    def test_set_vehicle_production_year(self):
+        _test_data = 2024
+        _expected = 2024
+        self.insTstObj.set_vehicle_production_year(_test_data)
+        self.assertEqual(self.insTstObj.vehicle_data['prod_year'], _expected)
+
+    def test_set_vehicle_price(self):
+        _test_data = 14236
+        _expected = 14236
+        self.insTstObj.set_vehicle_price(_test_data)
+        self.assertEqual(self.insTstObj.vehicle_data['price'], _expected)
 
     def test_set_rb_only_true(self):
         _expected = True
