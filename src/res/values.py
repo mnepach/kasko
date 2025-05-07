@@ -32,11 +32,11 @@ PROFIT_B_RATES =  [
 
 # границы диапазонов возраста водителя
 DRIVER_AGE_LIMIT_1 = 16
-DRIVER_AGE_LIMIT_2 = 24
+DRIVER_AGE_LIMIT_2 = 25
 DRIVER_AGE_LIMIT_3 = 35
 
 # коэффициенты от возраста водителя
-DRIVER_AGE = [
+DRIVER_RATES = [
     [1.15, 1.1, 1.05],
     [1.05, 1.0, 1.0],
     [1.0, 0.95, 0.85]

@@ -4,23 +4,23 @@ import res.values as values
 import kaskobot.calculations as calc
 
 class Program:
-    program_name = ""
-    program_price_limits = [
+    _name = ""
+    _price_limits = [
         values.VEHICLE_PRICE_LIMIT_1,
         values.VEHICLE_PRICE_LIMIT_2,
         values.VEHICLE_PRICE_LIMIT_3
     ]
     
     def __init__(self, list_a):
-        self._program_rates_a = {}
-        self._program_rates_b = {}
+        self._rates_a = {}
+        self._rates_b = {}
         for i in range(0, len(list_a)):
-            self._program_rates_a[str(i)] = list_a[i]
+            self._rates_a[str(i)] = list_a[i]
 
     def get_rate_from_program(self, year, price):
         _row_number = self.define_vehicle_age_row_number(year)
         _column_number = self.define_price_column_number(price)
-        _rate = self._program_rates_a[_row_number][_column_number]
+        _rate = self._rates_a[_row_number][_column_number]
         return float(_rate)
     
     def define_vehicle_age_row_number(self, vehicle_year):
@@ -30,8 +30,8 @@ class Program:
     def define_price_column_number(self, vehihcle_price):
         if (vehihcle_price > 0 ):
             _price_column_number = 0
-            for i in range(0, len(self.program_price_limits)):
-                 if vehihcle_price > self.program_price_limits[i]:
+            for i in range(0, len(self._price_limits)):
+                 if vehihcle_price > self._price_limits[i]:
                     _price_column_number = i + 1
         return int(_price_column_number)
 
