@@ -22,14 +22,28 @@ class TestProgram(unittest.TestCase):
         self.assertEqual(self.insTstObj.vehicle_data['price'], _expected)
 
     def test_set_rb_only_true(self):
-        _expected = True
         self.insTstObj.set_rb_only(True)
-        self.assertEqual(self.insTstObj.rb_only, _expected)
+        self.assertTrue(self.insTstObj.rb_only)
 
     def test_set_rb_only_false(self):
-        _expected = False
         self.insTstObj.set_rb_only(False)
-        self.assertEqual(self.insTstObj.rb_only, _expected)
+        self.assertFalse(self.insTstObj.rb_only)
+
+    def test_set_is_geely_true(self):
+        self.insTstObj.set_is_geely(True)
+        self.assertTrue(self.insTstObj.vehicle_data['is_geely'])
+
+    def test_set_is_geely_false(self):
+        self.insTstObj.set_is_geely(False)
+        self.assertFalse(self.insTstObj.vehicle_data['is_geely'])
+
+    def test_set_is_bmw_true(self):
+        self.insTstObj.set_is_bmw(True)
+        self.assertTrue(self.insTstObj.vehicle_data['is_bmw'])
+
+    def test_set_is_bmw_false(self):
+        self.insTstObj.set_is_bmw(False)
+        self.assertFalse(self.insTstObj.vehicle_data['is_bmw'])
 
     def test_get_territory_rate_rb_only(self):
         self.insTstObj.rb_only = True

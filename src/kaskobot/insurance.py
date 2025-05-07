@@ -7,7 +7,9 @@ import kaskobot.program as prg
 class Insurance:
     vehicle_data = {
         'prod_year': 0,
-        'price': 0
+        'price': 0,
+        'is_geely': False,
+        'is_bmw': False
     }
     rates_from_programs = []
     totals_for_programs = []
@@ -24,6 +26,12 @@ class Insurance:
 
     def set_rb_only(self, rb_only_indicator):
         self.rb_only = rb_only_indicator
+
+    def set_is_geely(self, is_geely_indicator):
+        self.vehicle_data['is_geely'] = is_geely_indicator
+
+    def set_is_bmw(self, is_bmw_indicator):
+        self.vehicle_data['is_bmw'] = is_bmw_indicator
 
     def get_territory_rate(self):
         if (self.rb_only):
