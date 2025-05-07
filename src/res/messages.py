@@ -3,3 +3,5 @@
 VEHICLE_YEAR_PROMPT = "Enter the vehicle year of production"
 VEHICLE_PRICE_PROMPT = "Enter the vehicle price"
 TERRITORY_PROMPT = "Omly Belarus (Y/N)?"
+IS_GEELY_PROMPT = "Car model is GEELY (Y/N)?"
+IS_BMW_PROMPT = "Car model is BMW (Y/N)?"
