@@ -4,13 +4,18 @@ import res.values as values
 import kaskobot.calculations as calc
 import kaskobot.program as prg
 
+class Vehicle:
+    year_of_prod = 0
+    price = 0
+    is_geely = False
+    is_bmw = False
+    
+    def __init__(self):
+        pass
+        
 class Insurance:
-    vehicle_data = {
-        'prod_year': 0,
-        'price': 0,
-        'is_geely': False,
-        'is_bmw': False
-    }
+
+    vehicle_data = Vehicle
     rates_from_programs = []
     totals_for_programs = []
     rb_only = True
@@ -19,19 +24,19 @@ class Insurance:
         pass
         
     def set_vehicle_production_year(self, year):
-        self.vehicle_data['prod_year'] = year
+        self.vehicle_data.year_of_prod = year
 
     def set_vehicle_price(self, price):
-        self.vehicle_data['price'] = price
+        self.vehicle_data.price = price
 
     def set_rb_only(self, rb_only_indicator):
         self.rb_only = rb_only_indicator
 
     def set_is_geely(self, is_geely_indicator):
-        self.vehicle_data['is_geely'] = is_geely_indicator
+        self.vehicle_data.is_geely = is_geely_indicator
 
     def set_is_bmw(self, is_bmw_indicator):
-        self.vehicle_data['is_bmw'] = is_bmw_indicator
+        self.vehicle_data.is_bmw = is_bmw_indicator
 
     def get_territory_rate(self):
         if (self.rb_only):
@@ -43,8 +48,8 @@ class Insurance:
     def set_rates_from_programs(self):
         _all_programs = prg.AVAILABLE_PROGRAMS
         for i in _all_programs:
-            _vehicle_year = self.vehicle_data['prod_year'] 
-            _vehicle_price = self.vehicle_data['price']
+            _vehicle_year = self.vehicle_data.year_of_prod
+            _vehicle_price = self.vehicle_data.price
             _rate_from_program = i.get_rate_from_program(_vehicle_year, 
                                                          _vehicle_price)
             self.rates_from_programs.append(_rate_from_program)
