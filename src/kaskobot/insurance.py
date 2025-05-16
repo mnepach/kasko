@@ -19,6 +19,7 @@ class Insurance:
     rates_from_programs = []
     totals_for_programs = []
     rb_only = True
+    drivers = []
 
     def __init__(self):
         pass

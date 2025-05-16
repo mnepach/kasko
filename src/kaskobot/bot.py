@@ -2,6 +2,7 @@
 
 from res import messages as msg
 from kaskobot.insurance import Insurance
+from kaskobot.driver import Driver
 
 def get_vehicle_year():
     _vehicleYear = input (msg.VEHICLE_YEAR_PROMPT + ": ")
@@ -34,6 +35,32 @@ def answer_to_bool(answer):
         _response = False
     return (_response)
 
+def get_driver_age():
+    _answer = input (msg.DRIVER_AGE_PROMPT + ": ")
+    return (_answer)
+
+def get_driver_expirience():
+    _answer = input (msg.DRIVER_EXP_PROMPT + ": ")
+    return (_answer)
+
+def get_driver_info():
+    _age = get_driver_age()
+    _expirience = get_driver_expirience()
+    _driver = Driver()
+    _driver.set_driver_age(_age)
+    _driver.set_driver_expirience(_expirience)
+    return _driver
+
+def get_drivers_info():
+        _more_drivers = True
+        _drivers = []
+        while _more_drivers:
+            _current_driver = get_driver_info()
+            _drivers.append(_current_driver)
+            _driver_info = input (msg.DRIVER_NEXT_PROMPT + ": ")
+            if (_driver_info.upper() == 'N'):
+                _more_drivers = False
+        return _drivers
 
 def run_bot():
     curInsurance = Insurance()
@@ -47,6 +74,7 @@ def run_bot():
     #curInsurance.set_rb_only(territory_ind)
     #curInsurance.set_is_geely(geely_ind)
     #curInsurance.set_is_bmw(bmw_ind)
+    curInsurance.drivers = get_drivers_info()
     curInsurance.set_rates_from_programs()
     curInsurance.calc_summary_values()
     print(curInsurance.totals_for_programs)

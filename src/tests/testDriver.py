@@ -9,6 +9,16 @@ class TestDriver(unittest.TestCase):
         self.drvTstObj = Driver()
         return super().setUp()
     
+    def test_set_driver_age(self):
+        _test_data = 24
+        self.drvTstObj.set_driver_age(_test_data)
+        self.assertEqual(self.drvTstObj.age, _test_data)
+
+    def test_set_driver_expirience(self):
+        _test_data = 10
+        self.drvTstObj.set_driver_expirience(_test_data)
+        self.assertEqual(self.drvTstObj.expirience, _test_data)
+    
     def test_define_age_culumn_number_0(self):
         _test_values = [16, 20, 24]
         for i in _test_values:

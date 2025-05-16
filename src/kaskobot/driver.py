@@ -8,7 +8,13 @@ class Driver:
     rate = 0
     
     def __init__(self):
-         pass
+        pass
+
+    def set_driver_age(self, age):
+        self.age = age
+
+    def set_driver_expirience(self, expirience):
+        self.expirience = expirience
     
     def _define_expirience_row(self):
         if (self.expirience < 1):
@@ -38,4 +44,3 @@ class Driver:
         _exp_row_number = str(self._define_expirience_row())
         _age_column_number = self._define_age_column()
         self.rate = _driver_rates[_exp_row_number][_age_column_number]
-        
