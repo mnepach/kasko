@@ -3,16 +3,8 @@
 import res.values as values
 import kaskobot.calculations as calc
 import kaskobot.program as prg
-
-class Vehicle:
-    year_of_prod = 0
-    price = 0
-    is_geely = False
-    is_bmw = False
-    
-    def __init__(self):
-        pass
-        
+from kaskobot.vehicle import Vehicle
+       
 class Insurance:
 
     vehicle_data = Vehicle
@@ -24,20 +16,14 @@ class Insurance:
     def __init__(self):
         pass
         
-    def set_vehicle_production_year(self, year):
-        self.vehicle_data.year_of_prod = year
+    def set_vehicle_info(self, vehicle):
+        self.vehicle_data = vehicle
 
-    def set_vehicle_price(self, price):
-        self.vehicle_data.price = price
-
+    def set_drivers_info(self, drivers):
+        self.drivers = drivers
+    
     def set_rb_only(self, rb_only_indicator):
         self.rb_only = rb_only_indicator
-
-    def set_is_geely(self, is_geely_indicator):
-        self.vehicle_data.is_geely = is_geely_indicator
-
-    def set_is_bmw(self, is_bmw_indicator):
-        self.vehicle_data.is_bmw = is_bmw_indicator
 
     def get_territory_rate(self):
         if (self.rb_only):
