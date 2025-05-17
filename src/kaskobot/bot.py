@@ -64,14 +64,11 @@ def get_driver_info():
     return _driver
 
 def get_drivers_info():
-        _more_drivers = True
+        _drivers_count = input (msg.DRIVER_COUNT_PROMPT + ": ")
         _drivers = []
-        while _more_drivers:
+        for i in range (int(_drivers_count)):
             _current_driver = get_driver_info()
             _drivers.append(_current_driver)
-            _driver_info = input (msg.DRIVER_NEXT_PROMPT + ": ")
-            if (_driver_info.upper() == 'N'):
-                _more_drivers = False
         return _drivers
 
 def run_bot():
