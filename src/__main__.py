@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .kaskobot.telegram_bot import TelegramBot
 
 def main():
