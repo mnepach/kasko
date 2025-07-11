@@ -5,7 +5,7 @@ class Vehicle:
     price = 0
     is_geely = False
     is_bmw = False
-    
+
     def __init__(self):
         pass
 

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import res.values as values
-import kaskobot.calculations as calc
+from ..res import values as values
 
 class Driver:
     age = 0
     expirience = 0
     rate = 0
-    
+
     def __init__(self):
         pass
 
@@ -15,7 +14,7 @@ class Driver:
 
     def set_driver_expirience(self, expirience):
         self.expirience = expirience
-    
+
     def _define_expirience_row(self):
         if (self.expirience < 1):
             _exp_row_number = 0
@@ -24,13 +23,14 @@ class Driver:
         else:
             _exp_row_number = 2
         return(_exp_row_number)
-    
+
     def _define_age_column(self):
         _age_limits = [
-              values.DRIVER_AGE_LIMIT_1,
-              values.DRIVER_AGE_LIMIT_2,
-              values.DRIVER_AGE_LIMIT_3
-              ]
+                values.DRIVER_AGE_LIMIT_1,
+                values.DRIVER_AGE_LIMIT_2,
+                values.DRIVER_AGE_LIMIT_3
+                ]
+        _age_column_number = 0 # Инициализация
         for i in range(0, len(_age_limits)):
             if self.age >= _age_limits[i]:
                 _age_column_number = i
