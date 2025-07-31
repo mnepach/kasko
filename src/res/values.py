@@ -1,10 +1,6 @@
-USD_TO_BYN_RATE = 3.25 
-
+# Возрастные категории для легковых ТС
 YEARS_OF_EXPERIENCE_PASSENGER = [
     "до года", "1 год", "2 года", "3 года", "4 года", "5 лет", "6 лет", "7 лет"
-]
-YEARS_OF_EXPERIENCE_TRUCK = [
-    "до года", "1 год", "2 года", "3 года", "4 года", "5 лет", "6 лет"
 ]
 
 # лимиты страховой суммы для легковых ТС и грузовых до 1.5 тонн
@@ -14,22 +10,10 @@ VEHICLE_PRICE_LIMIT_3 = 50000  # свыше 30 000 $ до 50 000 $ вкл.
 VEHICLE_PRICE_LIMIT_4 = 50001  # свыше 50 000 $ (для КАСКО-Оптима и др.)
 VEHICLE_PRICE_LIMIT_5 = 120000 # свыше 30 000 $ до 120 000 $ вкл. (для Доброе КАСКО)
 VEHICLE_PRICE_LIMIT_6 = 120001 # свыше 120 000 $ (для Доброе КАСКО)
-VEHICLE_PRICE_LIMIT_7 = 70000 # до 70 000 $ вкл. (для дисков Премиум)
-VEHICLE_PRICE_LIMIT_8 = 70001 # свыше 70 000 $ (для дисков Премиум)
+VEHICLE_PRICE_LIMIT_7 = 70000  # до 70 000 $ вкл. (для дисков Премиум)
+VEHICLE_PRICE_LIMIT_8 = 70001  # свыше 70 000 $ (для дисков Премиум)
 
-
-
-# типы ТС (handle_vehicle_type)
 VEHICLE_TYPE_PASSENGER_LIGHT_TRUCK = "Легковые, грузовые и грузопассажирские ТС грузоподъемностью до 1,5 тонн"
-VEHICLE_TYPE_MEDIUM_TRUCK_BUS_SPECIAL = "Грузовые ТС грузоподъемностью от 1,5 до 8 тонн, спецтехника, спецавтомобили, микроавтобусы и автобусы"
-VEHICLE_TYPE_HEAVY_TRUCK_TRAILER = "Грузовые ТС грузоподъемностью свыше 8 тонн, тягачи, прицепы и полуприцепы"
-
-# типы транспортных средств для грузовых программ
-TRUCK_TYPE_SPECIAL = "spec_vehicle_special_equipment"  # спецавтомобиль, спецтехника
-TRUCK_TYPE_1_5_8T_MICROBUS = "truck_1_5_8t_microbus"  # грузовые ТС гр-тью от 1,5 до 8 т, микроавтобус
-TRUCK_TYPE_BUS = "bus"                               # автобус
-TRUCK_TYPE_OVER_8T_TRACTOR = "truck_over_8t_tractor"  # тягач, грузовые ТС груз-тью свыше 8 т
-TRUCK_TYPE_TRAILER_SEMITRAILER = "trailer_semitrailer" # прицеп, п/прицеп
 
 # КАСКО-Оптима (3.2.1)
 OPTIMA_A_RATES = {
@@ -108,7 +92,7 @@ THIRD_PRICE_B_RATES = {
 
 # КАСКО-Премиум (3.5)
 PREMIUM_COEFF_BASE = 1.05
-PREMIUM_ADD_SERVICES_COST = 150 # стоимость доп услуг в USD/EUR
+PREMIUM_ADD_SERVICES_COST = 150  # стоимость доп услуг в USD
 
 # Доброе КАСКО (3.8)
 GOOD_KASKO_RATES = {
@@ -132,82 +116,18 @@ TRANSIT_B_RATES = {
     "all": {VEHICLE_PRICE_LIMIT_1: 4.58, VEHICLE_PRICE_LIMIT_2: 3.61, VEHICLE_PRICE_LIMIT_3: 3.22, VEHICLE_PRICE_LIMIT_4: 3.06}
 }
 
-# КАСКО-Бизнес Оптима (для грузовых ТС от 1.5 до 8 тонн, спецтехники, микроавтобусов, автобусов) (4.2)
-# СТРУКТУРА: {возраст ТС: {тип ТС: тариф}}
-BUSINESS_OPTIMA_A_RATES = {
-    "до года": {TRUCK_TYPE_SPECIAL: 1.77, TRUCK_TYPE_1_5_8T_MICROBUS: 4.03, TRUCK_TYPE_BUS: 1.91},
-    "1 год":   {TRUCK_TYPE_SPECIAL: 1.84, TRUCK_TYPE_1_5_8T_MICROBUS: 4.19, TRUCK_TYPE_BUS: 1.98},
-    "2 года":  {TRUCK_TYPE_SPECIAL: 1.91, TRUCK_TYPE_1_5_8T_MICROBUS: 4.35, TRUCK_TYPE_BUS: 2.06},
-    "3 года":  {TRUCK_TYPE_SPECIAL: 1.98, TRUCK_TYPE_1_5_8T_MICROBUS: 4.52, TRUCK_TYPE_BUS: 2.14},
-    "4 года":  {TRUCK_TYPE_SPECIAL: 2.05, TRUCK_TYPE_1_5_8T_MICROBUS: 4.68, TRUCK_TYPE_BUS: 2.21},
-    "5 лет":   {TRUCK_TYPE_SPECIAL: 2.28, TRUCK_TYPE_1_5_8T_MICROBUS: 5.20, TRUCK_TYPE_BUS: 2.46},
-    "6 лет":   {TRUCK_TYPE_SPECIAL: 2.37, TRUCK_TYPE_1_5_8T_MICROBUS: 5.40, TRUCK_TYPE_BUS: 2.56}
-}
-BUSINESS_OPTIMA_B_RATES = {
-    "all": {TRUCK_TYPE_SPECIAL: 1.77, TRUCK_TYPE_1_5_8T_MICROBUS: 4.03, TRUCK_TYPE_BUS: 1.91}
-}
-
-# КАСКО-Бизнес Эконом (для грузовых ТС от 1.5 до 8 тонн, спецтехники, микроавтобусов, автобусов) (4.3)
-# СТРУКТУРА: {возраст ТС: {тип ТС: тариф}}
-BUSINESS_ECONOM_A_RATES = {
-    "до года": {TRUCK_TYPE_SPECIAL: 1.41, TRUCK_TYPE_1_5_8T_MICROBUS: 3.23, TRUCK_TYPE_BUS: 1.53},
-    "1 год":   {TRUCK_TYPE_SPECIAL: 1.47, TRUCK_TYPE_1_5_8T_MICROBUS: 3.35, TRUCK_TYPE_BUS: 1.59},
-    "2 года":  {TRUCK_TYPE_SPECIAL: 1.53, TRUCK_TYPE_1_5_8T_MICROBUS: 3.48, TRUCK_TYPE_BUS: 1.65},
-    "3 года":  {TRUCK_TYPE_SPECIAL: 1.58, TRUCK_TYPE_1_5_8T_MICROBUS: 3.61, TRUCK_TYPE_BUS: 1.71},
-    "4 года":  {TRUCK_TYPE_SPECIAL: 1.64, TRUCK_TYPE_1_5_8T_MICROBUS: 3.74, TRUCK_TYPE_BUS: 1.77},
-    "5 лет":   {TRUCK_TYPE_SPECIAL: 1.82, TRUCK_TYPE_1_5_8T_MICROBUS: 4.16, TRUCK_TYPE_BUS: 1.97},
-    "6 лет":   {TRUCK_TYPE_SPECIAL: 1.90, TRUCK_TYPE_1_5_8T_MICROBUS: 4.32, TRUCK_TYPE_BUS: 2.05}
-}
-BUSINESS_ECONOM_B_RATES = {
-    "all": {TRUCK_TYPE_SPECIAL: 1.41, TRUCK_TYPE_1_5_8T_MICROBUS: 3.23, TRUCK_TYPE_BUS: 1.53}
-}
-
-# КАСКО-Бизнес Оптима (для грузовых ТС свыше 8 тонн, тягачей, прицепов и п/прицепов) (5.2)
-# СТРУКТУРА: {возраст ТС: {тип ТС: тариф}}
-BUSINESS_OPTIMA_OVER_8T_A_RATES = {
-    "до года": {TRUCK_TYPE_OVER_8T_TRACTOR: 2.40, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.30},
-    "1 год":   {TRUCK_TYPE_OVER_8T_TRACTOR: 2.50, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.35},
-    "2 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.60, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.41},
-    "3 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.69, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.46},
-    "4 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.79, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.51},
-    "5 лет":   {TRUCK_TYPE_OVER_8T_TRACTOR: 3.10, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.68},
-    "6 лет":   {TRUCK_TYPE_OVER_8T_TRACTOR: 3.22, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.74}
-}
-BUSINESS_OPTIMA_OVER_8T_B_RATES = {
-    "all": {TRUCK_TYPE_OVER_8T_TRACTOR: 2.40, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.30}
-}
-
-# КАСКО-Бизнес Эконом (для грузовых ТС свыше 8 тонн, тягачей, прицепов и п/прицепов) (5.3)
-# СТРУКТУРА: {возраст ТС: {тип ТС: тариф}}
-BUSINESS_ECONOM_OVER_8T_A_RATES = {
-    "до года": {TRUCK_TYPE_OVER_8T_TRACTOR: 1.92, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.11},
-    "1 год":   {TRUCK_TYPE_OVER_8T_TRACTOR: 2.00, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.15},
-    "2 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.08, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.20},
-    "3 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.15, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.24},
-    "4 года":  {TRUCK_TYPE_OVER_8T_TRACTOR: 2.23, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.28},
-    "5 лет":   {TRUCK_TYPE_OVER_8T_TRACTOR: 2.48, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.43},
-    "6 лет":   {TRUCK_TYPE_OVER_8T_TRACTOR: 2.58, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.48}
-}
-BUSINESS_ECONOM_OVER_8T_B_RATES = {
-    "all": {TRUCK_TYPE_OVER_8T_TRACTOR: 1.92, TRUCK_TYPE_TRAILER_SEMITRAILER: 1.11}
-}
-
-
-# коэффициенты (в %)
-# стаж/возраст (3.7.1.1)
+# Коэффициенты (в %)
 DRIVER_AGE_EXP_RATES = {
     "less_1_year": {"16-24": 1.15, "25-34": 1.1, "35_plus": 1.05},
     "1_year":      {"16-24": 1.05, "25-34": 1.0,  "35_plus": 1.0},
     "2_plus_years":{"16-24": 1.0,  "25-34": 0.95, "35_plus": 0.85}
 }
 
-# мультидрайв (3.7.1.2)
 MULTIDRIVE_STANDARD = 1.15
 MULTIDRIVE_GEELY = 1.05
 MULTIDRIVE_2_PLUS_YEARS_EXP = 1.00
 MULTIDRIVE_LEGAL_ENTITY_IP = 1.00
 
-# территория (3.7.2)
 TERRITORY_RATE_RB_ONLY = 0.95
 TERRITORY_RATE_ALL_TERRITORIES = 1.00
 
@@ -236,19 +156,19 @@ COEFF_CALCULATION_ONLY = 0.8
 # кросселинг (3.7.7.1)
 CROSSLING_COEFF = 0.95
 CROSSLING_THRESHOLDS = {
-    VEHICLE_PRICE_LIMIT_1: 45,  # до 15 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_2: 60,  # свыше 15 000 $ до 30 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_3: 90,  # свыше 30 000 $ до 50 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_4: 150  # свыше 50 000 $
+    VEHICLE_PRICE_LIMIT_1: 45,
+    VEHICLE_PRICE_LIMIT_2: 60,
+    VEHICLE_PRICE_LIMIT_3: 90,
+    VEHICLE_PRICE_LIMIT_4: 150
 }
 
 # специальная скидка (3.7.7.2)
 SPECIAL_DISCOUNT_COEFF = 0.97
 SPECIAL_DISCOUNT_THRESHOLDS = {
-    VEHICLE_PRICE_LIMIT_1: 45,  # до 15 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_2: 60,  # свыше 15 000 $ до 30 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_3: 90,  # свыше 30 000 $ до 50 000 $ вкл.
-    VEHICLE_PRICE_LIMIT_4: 150  # свыше 50 000 $
+    VEHICLE_PRICE_LIMIT_1: 45,
+    VEHICLE_PRICE_LIMIT_2: 60,
+    VEHICLE_PRICE_LIMIT_3: 90,
+    VEHICLE_PRICE_LIMIT_4: 150
 }
 
 # кредит/лизинг/залог (3.7.7.3)
@@ -267,30 +187,31 @@ COEFF_GEELY = 0.75
 # единовременная оплата (3.7.10)
 COEFF_SINGLE_PAYMENT = 0.9
 
-# лицензионные детали (3.7.11)
+# Лицензионные детали (3.7.11)
 COEFF_LICENSED_PARTS = 0.85
 
 # повреждение колесных дисков (3.7.12)
-COEFF_WHEEL_DISKS_LT_70K = 1.1 # для ТС со страховой суммой до 70 000 $ вкл.
-COEFF_WHEEL_DISKS_GT_70K = 1.0 # для ТС со страховой суммой свыше 70 000 $
+COEFF_WHEEL_DISKS_LT_70K = 1.1
+COEFF_WHEEL_DISKS_GT_70K = 1.0
 
 # коэффициент краткосрочности (3.9.2.8)
 SHORT_TERM_COEFFS = {
-    7: 0.04,   # 7 дней
-    14: 0.09,  # 14 дней
-    30: 0.18   # 1 месяц (с 15 дней до 1 месяца включительно)
+    7: 0.04,
+    14: 0.09,
+    30: 0.18
 }
 
+# мин. страховые взносы для легковых ТС
 MIN_PREMIUMS_PASSENGER = {
     "КАСКО-Оптима": {
         "А": 600,
         "Б": 400,
-        "А_SHORT_TERM": 450 # п.п.3.6.1.2
+        "А_SHORT_TERM": 450
     },
     "КАСКО-Профит": {
         "А": 600,
         "Б": 400,
-        "А_SHORT_TERM": 450 # п.п.3.6.1.2
+        "А_SHORT_TERM": 450
     },
     "КАСКО-Автопрофи": {
         "А": 400,
@@ -307,52 +228,16 @@ MIN_PREMIUMS_PASSENGER = {
     },
     "Доброе КАСКО": 100,
     "КАСКО-Транзит": {
-        7: 16,  # 1-7 дней
-        14: 36, # 8-14 дней
-        30: 72  # 15-30 дней (1 месяц)
+        7: 16,
+        14: 36,
+        30: 72
     }
 }
 
-# минимальные страховые взносы для грузовых ТС от 1.5 до 8 тонн, спецтехники, микроавтобусов, автобусов (4.4)
-MIN_PREMIUMS_BUSINESS_1_5_8T = {
-    "КАСКО-Бизнес Оптима": {
-        "А": {
-            TRUCK_TYPE_SPECIAL: 310,
-            TRUCK_TYPE_1_5_8T_MICROBUS: 600
-        },
-        "Б": {
-            TRUCK_TYPE_1_5_8T_MICROBUS: 400,
-            TRUCK_TYPE_SPECIAL: 210
-        }
-    },
-    "КАСКО-Бизнес Эконом": {
-        "А": {
-            TRUCK_TYPE_1_5_8T_MICROBUS: 400
-        },
-        "Б": {
-            TRUCK_TYPE_1_5_8T_MICROBUS: 300
-        }
-    }
-}
-
-# минимальные страховые взносы для грузовых ТС свыше 8 тонн, тягачей, прицепов и п/прицепов (5.4)
-MIN_PREMIUMS_BUSINESS_OVER_8T = {
-    "КАСКО-Бизнес Оптима": {
-        "А": {
-            TRUCK_TYPE_OVER_8T_TRACTOR: 520,
-            TRUCK_TYPE_TRAILER_SEMITRAILER: 310
-        },
-        "Б": {
-            "ALL_CATEGORIES": 210 # для всех категорий ТС
-        }
-    }
-}
-
-# доп информация для расчета
-PREMIUM_ADD_SERVICES_COST = 150 # стоимость доп услуг по программе "КАСКО-Премиум"
+# доп. информация для расчета
+PREMIUM_ADD_SERVICES_COST = 150
 FRANCHISE_HALF_PRICE_50K = 500
 FRANCHISE_HALF_PRICE_OVER_50K = 700
 FRANCHISE_THIRD_PRICE_50K = 1000
 FRANCHISE_THIRD_PRICE_OVER_50K = 1500
 FRANCHISE_AUTOPROFI = 200
-FRANCHISE_BUSINESS_ECONOM = 250
