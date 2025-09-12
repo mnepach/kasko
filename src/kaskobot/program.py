@@ -30,11 +30,7 @@ class BaseProgram:
         return rates_to_use.get(age_key, rates_to_use.get("all", {})).get(price_key)
 
     def get_min_premium(self, insurance_variant, **kwargs):
-        if self._name in ["КАСКО-Оптима", "КАСКО-Профит", "КАСКО-Автопрофи", "КАСКО-За полцены"]:
-            return values.MIN_PREMIUMS_PASSENGER[self._name][insurance_variant]
-        elif self._name == "КАСКО-за треть цены":
-            return values.MIN_PREMIUMS_PASSENGER[self._name]
-        return 0.0
+        return values.MIN_PREMIUMS_PASSENGER[self._name][insurance_variant]
 
     def _define_vehicle_age_key(self, vehicle_year):
         age_in_years = calc.define_age(manufacture_year=vehicle_year)
@@ -71,84 +67,6 @@ class ProfitProgram(BaseProgram):
             rates_b=values.PROFIT_B_RATES
         )
 
-class AutoprofiProgram(BaseProgram):
-    def __init__(self):
-        super().__init__(
-            name="КАСКО-Автопрофи",
-            description="Полное КАСКО с франшизой 200$.",
-            rates_a=values.AUTOPROFI_A_RATES,
-            rates_b=values.AUTOPROFI_B_RATES
-        )
-
-class HalfPriceProgram(BaseProgram):
-    def __init__(self):
-        super().__init__(
-            name="КАСКО-За полцены",
-            description="Полное КАСКО с франшизой 500$ (до 50k$) или 700$ (свыше 50k$).",
-            rates_a=values.HALF_PRICE_A_RATES,
-            rates_b=values.HALF_PRICE_B_RATES
-        )
-
-class ThirdPriceProgram(BaseProgram):
-    def __init__(self):
-        super().__init__(
-            name="КАСКО-за треть цены",
-            description="Полное КАСКО с франшизой 1000$ (до 50k$) или 1500$ (свыше 50k$).",
-            rates_a=values.THIRD_PRICE_A_RATES,
-            rates_b=values.THIRD_PRICE_B_RATES
-        )
-
-class GoodKaskoProgram(BaseProgram):
-    def __init__(self):
-        super().__init__(
-            name="Доброе КАСКО",
-            description="Страхование только от полной гибели и хищения. Только Вариант Б.",
-            rates_b=values.GOOD_KASKO_RATES
-        )
-        self._price_limits = [
-            values.VEHICLE_PRICE_LIMIT_2,
-            values.VEHICLE_PRICE_LIMIT_5,
-            values.VEHICLE_PRICE_LIMIT_6
-        ]
-
-    def get_rate(self, vehicle_year, vehicle_price, insurance_variant):
-        if insurance_variant == "А":
-            raise ValueError("Доброе КАСКО доступно только для Варианта Б.")
-        price_key = self._define_price_key(vehicle_price)
-        return values.GOOD_KASKO_RATES.get(price_key)
-
-    def get_min_premium(self, insurance_variant, **kwargs):
-        return values.MIN_PREMIUMS_PASSENGER["Доброе КАСКО"]
-
-class TransitKaskoProgram(BaseProgram):
-    def __init__(self):
-        super().__init__(
-            name="КАСКО-Транзит",
-            description="Для ТС с транзитными номерами. Короткие сроки (1-30 дней).",
-            rates_a=values.TRANSIT_A_RATES,
-            rates_b=values.TRANSIT_B_RATES
-        )
-
-    def get_rate(self, vehicle_year, vehicle_price, insurance_variant, transit_term_days=None):
-        base_rate = super().get_rate(vehicle_year, vehicle_price, insurance_variant)
-        if transit_term_days is None:
-            raise ValueError("Для КАСКО-Транзит необходим срок страхования.")
-        coeff = values.SHORT_TERM_COEFFS.get(
-            7 if transit_term_days <= 7 else
-            14 if transit_term_days <= 14 else
-            30
-        )
-        return base_rate * coeff
-
-    def get_min_premium(self, insurance_variant, transit_term_days=None):
-        if transit_term_days is None:
-            return 0.0
-        return values.MIN_PREMIUMS_PASSENGER["КАСКО-Транзит"].get(
-            7 if transit_term_days <= 7 else
-            14 if transit_term_days <= 14 else
-            30
-        )
-
 class PremiumKaskoProgram(BaseProgram):
     def __init__(self):
         super().__init__(
@@ -161,16 +79,11 @@ class PremiumKaskoProgram(BaseProgram):
         base_rate = optima.get_rate(vehicle_year, vehicle_price, insurance_variant)
         return base_rate * values.PREMIUM_COEFF_BASE
 
-    def get_min_premium(self, insurance_variant, has_wheel_disks=False):
-        return values.MIN_PREMIUMS_PASSENGER["КАСКО-Премиум"]["WITH_DISKS" if has_wheel_disks else "NO_DISKS"]
+    def get_min_premium(self, insurance_variant, **kwargs):
+        return values.MIN_PREMIUMS_PASSENGER["КАСКО-Премиум"]["NO_DISKS"]
 
 AVAILABLE_PROGRAMS = {
     "КАСКО-Оптима": OptimaProgram(),
     "КАСКО-Профит": ProfitProgram(),
-    "КАСКО-Автопрофи": AutoprofiProgram(),
-    "КАСКО-За полцены": HalfPriceProgram(),
-    "КАСКО-за треть цены": ThirdPriceProgram(),
     "КАСКО-Премиум": PremiumKaskoProgram(),
-    "Доброе КАСКО": GoodKaskoProgram(),
-    "КАСКО-Транзит": TransitKaskoProgram(),
 }

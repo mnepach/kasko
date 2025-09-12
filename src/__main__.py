@@ -2,7 +2,7 @@ from .kaskobot.telegram_bot import TelegramBot
 
 def main():
 
-    TOKEN = "8039071528:AAHwxMPFfUOaLgD13WYoVIhsJRqTGxF5d9w"
+    TOKEN = "8260339036:AAG7yFUiVXRLuEY0e9g2rHUh9DijjQEcKnc"
     bot = TelegramBot(TOKEN)
     bot.run()
 
