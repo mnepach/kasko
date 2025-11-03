@@ -140,7 +140,6 @@ def calculate_final_premium(data):
         if is_geely:
             total_tariff *= values.COEFF_GEELY
         total_tariff *= values.COEFF_IN_LIST if is_in_list else values.COEFF_NOT_IN_LIST
-        total_tariff *= values.COEFF_ONE_TIME_PAYMENT if not quarterly_payment else 1.0
 
         if licensed_parts and program_name in ["КАСКО-Оптима", "КАСКО-Профит"] and vehicle_age_years >= 3:
             total_tariff *= values.COEFF_LICENSED_PARTS
@@ -151,6 +150,11 @@ def calculate_final_premium(data):
         premium_amount = vehicle_price_usd * total_tariff
         if program_name == "КАСКО-Премиум":
             premium_amount += values.PREMIUM_ADD_SERVICES_COST
+
+        if quarterly_payment:
+            premium_amount *= values.COEFF_QUARTERLY_PAYMENT
+        else:
+            premium_amount *= values.COEFF_ONE_TIME_PAYMENT
 
         min_premium = values.MIN_PREMIUMS_PASSENGER.get(program_name)
         final_premium = max(premium_amount, min_premium) if min_premium is not None else premium_amount

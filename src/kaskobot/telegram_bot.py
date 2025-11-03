@@ -415,9 +415,8 @@ class TelegramBot:
 
                         final_premium, error_message = calc.calculate_final_premium(calculation_data)
                         if final_premium is not None:
-                            quarterly_premium = calc.calculate_quarterly_premium(final_premium)
-                            quarterly_premium = round(quarterly_premium)
-                            response_message += f"{program_name}: {quarterly_premium} USD\n"
+                            final_premium = round(final_premium)
+                            response_message += f"{program_name}: {final_premium} USD\n"
                             has_results = True
                         else:
                             error_messages.append(f"{program_name}: {error_message}")
