@@ -1,7 +1,14 @@
 import math
-from datetime import date
+from datetime import date, datetime
 from src.res import values
 from src.res import strings
+
+def is_promo_campaign_active():
+    """Проверяет, активна ли рекламная кампания"""
+    current_date = date.today()
+    start_date = datetime.strptime(values.PROMO_CAMPAIGN_START, "%Y-%m-%d").date()
+    end_date = datetime.strptime(values.PROMO_CAMPAIGN_END, "%Y-%m-%d").date()
+    return start_date <= current_date <= end_date
 
 def define_age(manufacture_year=None):
     if manufacture_year is None or not isinstance(manufacture_year, int):
@@ -10,7 +17,8 @@ def define_age(manufacture_year=None):
     current_date = date.today()
     current_year = current_date.year
     current_month = current_date.month
-    max_vehicle_age = 7
+    
+    max_vehicle_age = values.PROMO_MAX_VEHICLE_AGE if is_promo_campaign_active() else 7
     min_allowed_year = current_year - max_vehicle_age
 
     if manufacture_year < min_allowed_year:
@@ -30,8 +38,9 @@ def define_age(manufacture_year=None):
     return max(0, min(age, max_vehicle_age)), is_new_vehicle, ""
 
 def check_vehicle_age_eligibility(program_name, vehicle_age_years):
-    if vehicle_age_years > 7:
-        return False, "Возраст ТС превышает 7 лет, страхование недоступно."
+    max_age = values.PROMO_MAX_VEHICLE_AGE if is_promo_campaign_active() else 7
+    if vehicle_age_years > max_age:
+        return False, f"Возраст ТС превышает {max_age} лет, страхование недоступно."
     return True, ""
 
 def get_age_category(age_years, vehicle_type_group):
@@ -119,6 +128,19 @@ def calculate_k_territory(territory_option, vehicle_type_group):
         return values.TERRITORY_RATE_RB_ONLY
     return values.TERRITORY_RATE_ALL_TERRITORIES
 
+def check_promo_eligibility(vehicle_price_usd, is_in_list):
+    """Проверяет соответствие условиям рекламной акции"""
+    if not is_promo_campaign_active():
+        return False
+    
+    if vehicle_price_usd < values.PROMO_MIN_INSURANCE_SUM:
+        return False
+    
+    if not is_in_list:
+        return False
+    
+    return True
+
 def calculate_final_premium(data):
     try:
         program_name = data.get("program")
@@ -154,12 +176,16 @@ def calculate_final_premium(data):
         if credit_leasing_pledge:
             total_tariff *= values.CREDIT_LEASING_PLEDGE_COEFF
 
-        if is_geely:
-            total_tariff *= values.COEFF_GEELY
-            total_tariff *= values.COEFF_IN_LIST
-        elif is_in_list:
-            total_tariff *= values.COEFF_IN_LIST
-
+        promo_eligible = check_promo_eligibility(vehicle_price_usd, is_in_list)
+        
+        if promo_eligible and is_in_list:
+            total_tariff *= values.COEFF_PROMO_CAMPAIGN
+            if is_geely:
+                total_tariff *= values.COEFF_GEELY
+        else:
+            if is_geely:
+                total_tariff *= values.COEFF_GEELY
+            
         if licensed_parts and program_name in ["КАСКО-Оптима", "КАСКО-Профит"] and vehicle_age_years >= 3:
             total_tariff *= values.COEFF_LICENSED_PARTS
 

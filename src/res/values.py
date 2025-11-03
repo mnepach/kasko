@@ -5,10 +5,21 @@ VEHICLE_PRICE_LIMIT_2 = 30000
 VEHICLE_PRICE_LIMIT_3 = 50000
 VEHICLE_PRICE_LIMIT_4 = 50001
 
-VEHICLE_MAKES_IN_LIST = ["MAZDA", "NISSAN", "GEELY"]
+# Список марок согласно приказу O0090 от 19.09.2025
+VEHICLE_MAKES_IN_LIST = [
+    "AUDI", "BMW", "CHANGAN", "CHERY", "CHEVROLET", 
+    "DONGFENG", "CIIMO", "CITROEN", "EXEED", "FORD",
+    "GEELY", "BELGEE", "HAVAL", "JAGUAR", "JETOUR",
+    "KIA", "LADA", "LAND ROVER", "MAZDA", "MERCEDES-BENZ",
+    "MINI", "MITSUBISHI", "NISSAN", "OPEL", "PORSCHE",
+    "RENAULT", "DACIA", "SKODA", "SUBARU", "SUZUKI",
+    "TOYOTA", "VOLKSWAGEN", "VOLVO", "ZEEKR"
+]
+
+BMW_EXCLUDED_MODELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "XM"]
 
 MAKE_COEFFICIENTS = {
-    "GEELY": 0.75,  # 0.75 * 0.9 (акционное авто) = 0.675
+    "GEELY": 0.75,
     "ИНАЯ МАРКА": 1.0
 }
 
@@ -18,25 +29,26 @@ DRIVER_AGE_EXP_RATES = {
     "2_plus_years": {"16-24": 1.0, "25-34": 0.95, "35_plus": 0.85}
 }
 
-# Коэффициенты мультидрайва
 MULTIDRIVE_STANDARD = 1.15
-MULTIDRIVE_GEELY = 1.05  # Для Geely (всегда мультидрайв)
+MULTIDRIVE_GEELY = 1.05
 MULTIDRIVE_2_PLUS_YEARS_EXP = 1.00
 
-# Коэффициенты территории
-TERRITORY_RATE_RB_ONLY = 0.95  # Только РБ
-TERRITORY_RATE_ALL_TERRITORIES = 1.00  # РБ и за пределами
+TERRITORY_RATE_RB_ONLY = 0.95
+TERRITORY_RATE_ALL_TERRITORIES = 1.00
 
-# Коэффициенты опций
-CREDIT_LEASING_PLEDGE_COEFF = 0.9  # Кредит/лизинг/залог
-COEFF_GEELY = 0.75  # Для марки Geely
-PREMIUM_COEFF_BASE = 1.05  # Для программы Премиум
-PREMIUM_ADD_SERVICES_COST = 150  # Доп. услуги для Премиум
-COEFF_QUARTERLY_PAYMENT = 1.1  # Ежеквартальная оплата
-COEFF_LICENSED_PARTS = 0.75  # Лицензионные детали (для авто старше 3 лет)
-COEFF_IN_LIST = 0.9  # Авто из списка акционных
-COEFF_NOT_IN_LIST = 1.0  # Авто не из списка
-COEFF_ONE_TIME_PAYMENT = 1.0  # Единовременная оплата
+CREDIT_LEASING_PLEDGE_COEFF = 0.9
+COEFF_GEELY = 0.75
+PREMIUM_COEFF_BASE = 1.05
+PREMIUM_ADD_SERVICES_COST = 150
+COEFF_QUARTERLY_PAYMENT = 1.1
+COEFF_LICENSED_PARTS = 0.75
+COEFF_PROMO_CAMPAIGN = 0.9
+COEFF_ONE_TIME_PAYMENT = 1.0
+
+PROMO_CAMPAIGN_START = "2025-10-01"
+PROMO_CAMPAIGN_END = "2025-12-31"
+PROMO_MIN_INSURANCE_SUM = 10000
+PROMO_MAX_VEHICLE_AGE = 10
 
 MIN_PREMIUMS_PASSENGER = {
     "КАСКО-Оптима": 600,
