@@ -8,7 +8,7 @@ VEHICLE_PRICE_LIMIT_4 = 50001
 VEHICLE_MAKES_IN_LIST = ["MAZDA", "NISSAN", "GEELY"]
 
 MAKE_COEFFICIENTS = {
-    "GEELY": 0.75,
+    "GEELY": 0.75,  # 0.75 * 0.9 (акционное авто) = 0.675
     "ИНАЯ МАРКА": 1.0
 }
 
@@ -18,23 +18,25 @@ DRIVER_AGE_EXP_RATES = {
     "2_plus_years": {"16-24": 1.0, "25-34": 0.95, "35_plus": 0.85}
 }
 
+# Коэффициенты мультидрайва
 MULTIDRIVE_STANDARD = 1.15
-MULTIDRIVE_GEELY = 1.05
+MULTIDRIVE_GEELY = 1.05  # Для Geely (всегда мультидрайв)
 MULTIDRIVE_2_PLUS_YEARS_EXP = 1.00
 
-TERRITORY_RATE_RB_ONLY = 0.95
-TERRITORY_RATE_ALL_TERRITORIES = 1.00
+# Коэффициенты территории
+TERRITORY_RATE_RB_ONLY = 0.95  # Только РБ
+TERRITORY_RATE_ALL_TERRITORIES = 1.00  # РБ и за пределами
 
-CREDIT_LEASING_PLEDGE_COEFF = 0.9
-COEFF_GEELY = 0.75
-PREMIUM_COEFF_BASE = 1.05
-PREMIUM_ADD_SERVICES_COST = 150
-COEFF_QUARTERLY_PAYMENT = 1.1
-COEFF_LICENSED_PARTS = 0.85
-COEFF_GEELY_LOW_EXP = 1.05
-COEFF_IN_LIST = 0.9
-COEFF_NOT_IN_LIST = 1.0
-COEFF_ONE_TIME_PAYMENT = 1.0
+# Коэффициенты опций
+CREDIT_LEASING_PLEDGE_COEFF = 0.9  # Кредит/лизинг/залог
+COEFF_GEELY = 0.75  # Для марки Geely
+PREMIUM_COEFF_BASE = 1.05  # Для программы Премиум
+PREMIUM_ADD_SERVICES_COST = 150  # Доп. услуги для Премиум
+COEFF_QUARTERLY_PAYMENT = 1.1  # Ежеквартальная оплата
+COEFF_LICENSED_PARTS = 0.75  # Лицензионные детали (для авто старше 3 лет)
+COEFF_IN_LIST = 0.9  # Авто из списка акционных
+COEFF_NOT_IN_LIST = 1.0  # Авто не из списка
+COEFF_ONE_TIME_PAYMENT = 1.0  # Единовременная оплата
 
 MIN_PREMIUMS_PASSENGER = {
     "КАСКО-Оптима": 600,
