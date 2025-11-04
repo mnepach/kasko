@@ -176,15 +176,18 @@ def calculate_final_premium(data):
         if credit_leasing_pledge:
             total_tariff *= values.CREDIT_LEASING_PLEDGE_COEFF
 
+        # Применение коэффициентов согласно приказу O0090
         promo_eligible = check_promo_eligibility(vehicle_price_usd, is_in_list)
         
-        if promo_eligible and is_in_list:
+        if is_geely:
+            # Для GEELY: 0.75 * 0.9 = 0.675
+            total_tariff *= values.COEFF_GEELY
+            if promo_eligible:
+                total_tariff *= values.COEFF_PROMO_CAMPAIGN
+        elif promo_eligible and is_in_list:
+            # Для автомобилей из списка акции: 0.9
             total_tariff *= values.COEFF_PROMO_CAMPAIGN
-            if is_geely:
-                total_tariff *= values.COEFF_GEELY
-        else:
-            if is_geely:
-                total_tariff *= values.COEFF_GEELY
+        # Для остальных (не в списке, не GEELY): коэффициент 1.0 (не применяется)
             
         if licensed_parts and program_name in ["КАСКО-Оптима", "КАСКО-Профит"] and vehicle_age_years >= 3:
             total_tariff *= values.COEFF_LICENSED_PARTS

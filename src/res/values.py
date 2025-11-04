@@ -18,6 +18,12 @@ VEHICLE_MAKES_IN_LIST = [
 
 BMW_EXCLUDED_MODELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "XM"]
 
+BMW_MODELS = [
+    "1 Series", "2 Series", "3 Series", "4 Series", "5 Series", 
+    "6 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", 
+    "X5", "X6", "X7", "Z4", "i3", "i4", "i7", "iX", "iX3"
+]
+
 MAKE_COEFFICIENTS = {
     "GEELY": 0.75,
     "ИНАЯ МАРКА": 1.0

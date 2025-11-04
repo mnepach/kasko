@@ -16,6 +16,7 @@ class BotState(StatesGroup):
     ASK_VEHICLE_YEAR = State()
     ASK_VEHICLE_PRICE = State()
     ASK_VEHICLE_MAKE = State()
+    ASK_BMW_MODEL = State()
     ASK_IS_IN_LIST = State()
     ASK_IS_MULTIDRIVE = State()
     ASK_DRIVER_AGE = State()
@@ -38,6 +39,7 @@ class TelegramBot:
         self.bot.message_handler(state=BotState.ASK_VEHICLE_YEAR)(self.handle_vehicle_year)
         self.bot.message_handler(state=BotState.ASK_VEHICLE_PRICE)(self.handle_vehicle_price)
         self.bot.message_handler(state=BotState.ASK_VEHICLE_MAKE)(self.handle_vehicle_make)
+        self.bot.message_handler(state=BotState.ASK_BMW_MODEL)(self.handle_bmw_model)
         self.bot.message_handler(state=BotState.ASK_IS_IN_LIST)(self.handle_is_in_list)
         self.bot.message_handler(state=BotState.ASK_IS_MULTIDRIVE)(self.handle_is_multidrive)
         self.bot.message_handler(state=BotState.ASK_DRIVER_AGE)(self.handle_driver_age)
@@ -86,26 +88,23 @@ class TelegramBot:
         except ValueError:
             return False
 
-    def extract_number(self, text):
-        try:
-            number = re.match(r'^\d+', text.strip())
-            if number:
-                return int(number.group(0))
-            return None
-        except ValueError:
-            return None
+    def is_valid_number(self, text):
+        """Проверяет, что строка содержит ТОЛЬКО цифры"""
+        return text.strip().isdigit()
 
     def is_valid_driver_age(self, age_str):
-        age = self.extract_number(age_str)
-        if age is not None and 16 <= age <= 80:
+        if not self.is_valid_number(age_str):
+            return False, None
+        age = int(age_str.strip())
+        if 16 <= age <= 80:
             return True, age
         return False, None
 
     def is_valid_driver_exp(self, exp_str, max_exp):
-        if exp_str.lower().replace("ё", "е") == "меньше года":
-            return True, 0
-        exp = self.extract_number(exp_str)
-        if exp is not None and 0 <= exp <= max_exp:
+        if not self.is_valid_number(exp_str):
+            return False, None
+        exp = int(exp_str.strip())
+        if 0 <= exp <= max_exp:
             return True, exp
         return False, None
 
@@ -177,27 +176,66 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
             
+        elif response == "BMW":
+            user_data[chat_id]["vehicle_make"] = "BMW"
+            user_data[chat_id]["is_geely"] = False
+            
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
+            for model in values.BMW_MODELS:
+                markup.add(model)
+            markup.add("Другая модель")
+            self.bot.send_message(chat_id, "Выберите модель BMW:", reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_BMW_MODEL)
+            
         elif response == "ИНАЯ МАРКА":
             user_data[chat_id]["vehicle_make"] = "ИНАЯ МАРКА"
             user_data[chat_id]["is_geely"] = False
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             for make in values.VEHICLE_MAKES_IN_LIST:
-                if make != "GEELY":
+                if make not in ["GEELY", "BMW"]:
                     markup.add(make)
             markup.add("ДРУГОЕ")
             self.bot.send_message(chat_id, "Выберите автомобиль из списка", reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_IN_LIST)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY", "ИНАЯ МАРКА")
+            markup.add("GEELY", "BMW", "ИНАЯ МАРКА")
+            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+
+    def handle_bmw_model(self, message):
+        chat_id = message.chat.id
+        response = message.text
+        
+        if response in values.BMW_MODELS:
+            user_data[chat_id]["bmw_model"] = response
+            user_data[chat_id]["is_in_list"] = True
+            
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
+            
+        elif response == "Другая модель":
+            user_data[chat_id]["bmw_model"] = "Другая модель"
+            user_data[chat_id]["is_in_list"] = False
+            
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
+        else:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
+            for model in values.BMW_MODELS:
+                markup.add(model)
+            markup.add("Другая модель")
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
 
     def handle_is_in_list(self, message):
         chat_id = message.chat.id
         response = message.text.upper()
 
-        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make != "GEELY"]
+        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make not in ["GEELY", "BMW"]]
         
         if response in valid_makes or response == "ДРУГОЕ":
             user_data[chat_id]["is_in_list"] = response in valid_makes
@@ -239,15 +277,15 @@ class TelegramBot:
         is_valid, age = self.is_valid_driver_age(response)
         if is_valid:
             user_data[chat_id]["drivers_data"] = [{"age": age, "experience": 0}]
-            self.bot.send_message(chat_id, f"{strings.ASK_DRIVER_EXP} (Если стаж меньше года, введите '0' или 'меньше года')", reply_markup=types.ReplyKeyboardRemove())
+            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
         else:
-            self.bot.send_message(chat_id, "Возраст водителя должен быть от 16 до 80 лет.")
+            self.bot.send_message(chat_id, "Введите возраст водителя только цифрами (например: 25). Возраст должен быть от 16 до 80 лет.")
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
 
     def handle_driver_exp(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
+        response = message.text
         max_exp = user_data[chat_id]["drivers_data"][0]["age"] - 16
 
         is_valid, exp = self.is_valid_driver_exp(response, max_exp)
@@ -259,7 +297,7 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
         else:
-            self.bot.send_message(chat_id, f"Стаж вождения должен быть от меньше года (0) до {max_exp} лет.")
+            self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
 
     def handle_territory(self, message):
