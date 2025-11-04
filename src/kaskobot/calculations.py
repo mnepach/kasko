@@ -102,7 +102,16 @@ def calculate_base_tariff(program_name, vehicle_age_years, vehicle_price_usd, ve
 
 def calculate_k_driver(drivers_known, drivers_data, is_geely, is_multidrive):
     if is_geely:
-        return values.MULTIDRIVE_GEELY
+        # Для GEELY: только по стажу (возраст не учитывается)
+        if not drivers_data or len(drivers_data) == 0:
+            return values.MULTIDRIVE_GEELY_LESS_2_YEARS
+        
+        driver_exp = drivers_data[0]["experience"]
+        
+        if driver_exp >= 2:
+            return values.MULTIDRIVE_GEELY_2_PLUS_YEARS
+        else:
+            return values.MULTIDRIVE_GEELY_LESS_2_YEARS
     
     if not drivers_data or len(drivers_data) == 0:
         return values.MULTIDRIVE_STANDARD

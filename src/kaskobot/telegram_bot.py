@@ -171,10 +171,11 @@ class TelegramBot:
             user_data[chat_id]["is_multidrive"] = True
             user_data[chat_id]["drivers_known"] = False
             user_data[chat_id]["num_drivers"] = 1
-            user_data[chat_id]["drivers_data"] = []
+            user_data[chat_id]["drivers_data"] = [{"age": 0, "experience": 0}]  # Возраст не используется для GEELY
             
-            self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
-            self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+            # Для GEELY спрашиваем ТОЛЬКО стаж
+            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=types.ReplyKeyboardRemove())
+            self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
             
         elif response == "ИНАЯ МАРКА":
             user_data[chat_id]["is_geely"] = False
@@ -197,9 +198,10 @@ class TelegramBot:
         chat_id = message.chat.id
         response = message.text
         
-        if response in values.BMW_MODELS:
+        if response in values.BMW_M_MODELS:
+            # BMW M-серия НЕ участвует в акции
             user_data[chat_id]["bmw_model"] = response
-            user_data[chat_id]["is_in_list"] = True  # BMW из списка - коэффициент 0.9
+            user_data[chat_id]["is_in_list"] = False  # Коэффициент 1.0
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -207,8 +209,9 @@ class TelegramBot:
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
             
         elif response == "Другая модель":
+            # Другие BMW (не M-серия) участвуют в акции
             user_data[chat_id]["bmw_model"] = "Другая модель"
-            user_data[chat_id]["is_in_list"] = False  # BMW не из списка - коэффициент 1.0
+            user_data[chat_id]["is_in_list"] = True  # Коэффициент 0.9
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -216,7 +219,7 @@ class TelegramBot:
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
-            for model in values.BMW_MODELS:
+            for model in values.BMW_M_MODELS:
                 markup.add(model)
             markup.add("Другая модель")
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
@@ -231,7 +234,7 @@ class TelegramBot:
             user_data[chat_id]["vehicle_make"] = "BMW"
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
-            for model in values.BMW_MODELS:
+            for model in values.BMW_M_MODELS:
                 markup.add(model)
             markup.add("Другая модель")
             self.bot.send_message(chat_id, "Выберите модель BMW:", reply_markup=markup)
@@ -287,7 +290,13 @@ class TelegramBot:
     def handle_driver_exp(self, message):
         chat_id = message.chat.id
         response = message.text
-        max_exp = user_data[chat_id]["drivers_data"][0]["age"] - 16
+        
+        # Для GEELY возраст не учитывается, проверяем только стаж
+        if user_data[chat_id].get("is_geely", False):
+            # Для GEELY максимальный стаж может быть больше
+            max_exp = 70  # Разумное ограничение
+        else:
+            max_exp = user_data[chat_id]["drivers_data"][0]["age"] - 16
 
         is_valid, exp = self.is_valid_driver_exp(response, max_exp)
         if is_valid:
@@ -298,7 +307,10 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
         else:
-            self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
+            if user_data[chat_id].get("is_geely", False):
+                self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
+            else:
+                self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
 
     def handle_territory(self, message):
