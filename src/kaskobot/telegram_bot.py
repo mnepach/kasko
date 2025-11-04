@@ -176,22 +176,12 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
             
-        elif response == "BMW":
-            user_data[chat_id]["vehicle_make"] = "BMW"
-            user_data[chat_id]["is_geely"] = False
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
-            for model in values.BMW_MODELS:
-                markup.add(model)
-            markup.add("Другая модель")
-            self.bot.send_message(chat_id, "Выберите модель BMW:", reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_BMW_MODEL)
-            
         elif response == "ИНАЯ МАРКА":
-            user_data[chat_id]["vehicle_make"] = "ИНАЯ МАРКА"
             user_data[chat_id]["is_geely"] = False
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            # BMW первым в списке для удобства
+            markup.add("BMW")
             for make in values.VEHICLE_MAKES_IN_LIST:
                 if make not in ["GEELY", "BMW"]:
                     markup.add(make)
@@ -200,7 +190,7 @@ class TelegramBot:
             self.bot.set_state(chat_id, BotState.ASK_IS_IN_LIST)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY", "BMW", "ИНАЯ МАРКА")
+            markup.add("GEELY", "ИНАЯ МАРКА")
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
 
     def handle_bmw_model(self, message):
@@ -209,7 +199,7 @@ class TelegramBot:
         
         if response in values.BMW_MODELS:
             user_data[chat_id]["bmw_model"] = response
-            user_data[chat_id]["is_in_list"] = True
+            user_data[chat_id]["is_in_list"] = True  # BMW из списка - коэффициент 0.9
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -218,7 +208,7 @@ class TelegramBot:
             
         elif response == "Другая модель":
             user_data[chat_id]["bmw_model"] = "Другая модель"
-            user_data[chat_id]["is_in_list"] = False
+            user_data[chat_id]["is_in_list"] = False  # BMW не из списка - коэффициент 1.0
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -235,9 +225,20 @@ class TelegramBot:
         chat_id = message.chat.id
         response = message.text.upper()
 
-        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make not in ["GEELY", "BMW"]]
+        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make != "GEELY"]
         
-        if response in valid_makes or response == "ДРУГОЕ":
+        if response == "BMW":
+            user_data[chat_id]["vehicle_make"] = "BMW"
+            
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
+            for model in values.BMW_MODELS:
+                markup.add(model)
+            markup.add("Другая модель")
+            self.bot.send_message(chat_id, "Выберите модель BMW:", reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_BMW_MODEL)
+            
+        elif response in valid_makes or response == "ДРУГОЕ":
+            user_data[chat_id]["vehicle_make"] = response
             user_data[chat_id]["is_in_list"] = response in valid_makes
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)

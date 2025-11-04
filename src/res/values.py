@@ -5,7 +5,6 @@ VEHICLE_PRICE_LIMIT_2 = 30000
 VEHICLE_PRICE_LIMIT_3 = 50000
 VEHICLE_PRICE_LIMIT_4 = 50001
 
-# Список марок согласно приказу O0090 от 19.09.2025
 VEHICLE_MAKES_IN_LIST = [
     "AUDI", "BMW", "CHANGAN", "CHERY", "CHEVROLET", 
     "DONGFENG", "CIIMO", "CITROEN", "EXEED", "FORD",
@@ -16,13 +15,7 @@ VEHICLE_MAKES_IN_LIST = [
     "TOYOTA", "VOLKSWAGEN", "VOLVO", "ZEEKR"
 ]
 
-BMW_EXCLUDED_MODELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "XM"]
-
-BMW_MODELS = [
-    "1 Series", "2 Series", "3 Series", "4 Series", "5 Series", 
-    "6 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", 
-    "X5", "X6", "X7", "Z4", "i3", "i4", "i7", "iX", "iX3"
-]
+BMW_MODELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "XM"]
 
 MAKE_COEFFICIENTS = {
     "GEELY": 0.75,
