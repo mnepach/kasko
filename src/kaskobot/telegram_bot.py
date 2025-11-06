@@ -23,6 +23,7 @@ class BotState(StatesGroup):
     ASK_DRIVER_EXP = State()
     ASK_TERRITORY = State()
     ASK_IS_CREDIT_LEASING_PLEDGE = State()
+    ASK_GREEN_PLATES = State()
     ASK_IS_LICENSED_PARTS = State()
     ASK_QUARTERLY_PAYMENT = State()
 
@@ -46,6 +47,7 @@ class TelegramBot:
         self.bot.message_handler(state=BotState.ASK_DRIVER_EXP)(self.handle_driver_exp)
         self.bot.message_handler(state=BotState.ASK_TERRITORY)(self.handle_territory)
         self.bot.message_handler(state=BotState.ASK_IS_CREDIT_LEASING_PLEDGE)(self.handle_is_credit_leasing_pledge)
+        self.bot.message_handler(state=BotState.ASK_GREEN_PLATES)(self.handle_green_plates)
         self.bot.message_handler(state=BotState.ASK_IS_LICENSED_PARTS)(self.handle_is_licensed_parts)
         self.bot.message_handler(state=BotState.ASK_QUARTERLY_PAYMENT)(self.handle_quarterly_payment)
         self.bot.message_handler(content_types=['text'])(self.handle_unexpected_text)
@@ -89,7 +91,6 @@ class TelegramBot:
             return False
 
     def is_valid_number(self, text):
-        """Проверяет, что строка содержит ТОЛЬКО цифры"""
         return text.strip().isdigit()
 
     def is_valid_driver_age(self, age_str):
@@ -171,9 +172,8 @@ class TelegramBot:
             user_data[chat_id]["is_multidrive"] = True
             user_data[chat_id]["drivers_known"] = False
             user_data[chat_id]["num_drivers"] = 1
-            user_data[chat_id]["drivers_data"] = [{"age": 0, "experience": 0}]  # Возраст не используется для GEELY
+            user_data[chat_id]["drivers_data"] = [{"age": 0, "experience": 0}]
             
-            # Для GEELY спрашиваем ТОЛЬКО стаж
             self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
             
@@ -181,7 +181,6 @@ class TelegramBot:
             user_data[chat_id]["is_geely"] = False
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            # BMW первым в списке для удобства
             markup.add("BMW")
             for make in values.VEHICLE_MAKES_IN_LIST:
                 if make not in ["GEELY", "BMW"]:
@@ -199,9 +198,8 @@ class TelegramBot:
         response = message.text
         
         if response in values.BMW_M_MODELS:
-            # BMW M-серия НЕ участвует в акции
             user_data[chat_id]["bmw_model"] = response
-            user_data[chat_id]["is_in_list"] = False  # Коэффициент 1.0
+            user_data[chat_id]["is_in_list"] = False
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -209,9 +207,8 @@ class TelegramBot:
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
             
         elif response == "Другая модель":
-            # Другие BMW (не M-серия) участвуют в акции
             user_data[chat_id]["bmw_model"] = "Другая модель"
-            user_data[chat_id]["is_in_list"] = True  # Коэффициент 0.9
+            user_data[chat_id]["is_in_list"] = True
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -291,10 +288,8 @@ class TelegramBot:
         chat_id = message.chat.id
         response = message.text
         
-        # Для GEELY возраст не учитывается, проверяем только стаж
         if user_data[chat_id].get("is_geely", False):
-            # Для GEELY максимальный стаж может быть больше
-            max_exp = 70  # Разумное ограничение
+            max_exp = 70
         else:
             max_exp = user_data[chat_id]["drivers_data"][0]["age"] - 16
 
@@ -334,6 +329,21 @@ class TelegramBot:
 
         if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
             user_data[chat_id]["credit_leasing_pledge"] = (response == strings.YES_BUTTON.lower())
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.ASK_GREEN_PLATES, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_GREEN_PLATES)
+        else:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+
+    def handle_green_plates(self, message):
+        chat_id = message.chat.id
+        response = message.text.lower().replace("ё", "е")
+
+        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
+            user_data[chat_id]["green_plates"] = (response == strings.YES_BUTTON.lower())
             self.proceed_to_licensed_parts_or_calc(chat_id)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -390,6 +400,7 @@ class TelegramBot:
                     "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
                     "licensed_parts": data.get("licensed_parts", False),
                     "is_in_list": data.get("is_in_list", False),
+                    "green_plates": data.get("green_plates", False),
                     "quarterly_payment": False
                 }
 
@@ -444,6 +455,7 @@ class TelegramBot:
                             "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
                             "licensed_parts": data.get("licensed_parts", False),
                             "is_in_list": data.get("is_in_list", False),
+                            "green_plates": data.get("green_plates", False),
                             "quarterly_payment": True
                         }
 

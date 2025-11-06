@@ -4,7 +4,6 @@ from src.res import values
 from src.res import strings
 
 def is_promo_campaign_active():
-    """Проверяет, активна ли рекламная кампания"""
     current_date = date.today()
     start_date = datetime.strptime(values.PROMO_CAMPAIGN_START, "%Y-%m-%d").date()
     end_date = datetime.strptime(values.PROMO_CAMPAIGN_END, "%Y-%m-%d").date()
@@ -18,7 +17,6 @@ def define_age(manufacture_year=None):
     current_year = current_date.year
     current_month = current_date.month
     
-    # Всегда максимальный возраст 7 лет
     max_vehicle_age = 7
     min_allowed_year = current_year - max_vehicle_age
 
@@ -103,7 +101,6 @@ def calculate_base_tariff(program_name, vehicle_age_years, vehicle_price_usd, ve
 
 def calculate_k_driver(drivers_known, drivers_data, is_geely, is_multidrive):
     if is_geely:
-        # Для GEELY: только по стажу (возраст не учитывается)
         if not drivers_data or len(drivers_data) == 0:
             return values.MULTIDRIVE_GEELY_LESS_2_YEARS
         
@@ -139,7 +136,6 @@ def calculate_k_territory(territory_option, vehicle_type_group):
     return values.TERRITORY_RATE_ALL_TERRITORIES
 
 def check_promo_eligibility(is_in_list):
-    """Проверяет соответствие условиям рекламной акции"""
     if not is_promo_campaign_active():
         return False
     
@@ -163,6 +159,7 @@ def calculate_final_premium(data):
         licensed_parts = data.get("licensed_parts", False)
         quarterly_payment = data.get("quarterly_payment", False)
         is_in_list = data.get("is_in_list", False)
+        green_plates = data.get("green_plates", False)
 
         if not all([program_name, vehicle_age_years is not None, vehicle_price_usd, vehicle_type_group, territory]):
             return None, f"Недостаточно данных для расчета: {data}"
@@ -183,21 +180,20 @@ def calculate_final_premium(data):
         if credit_leasing_pledge:
             total_tariff *= values.CREDIT_LEASING_PLEDGE_COEFF
 
-        # Применение коэффициентов согласно приказу O0090
         promo_eligible = check_promo_eligibility(is_in_list)
         
         if is_geely:
-            # Для GEELY: 0.75 * 0.9 = 0.675
             total_tariff *= values.COEFF_GEELY
             if promo_eligible:
                 total_tariff *= values.COEFF_PROMO_CAMPAIGN
         elif promo_eligible and is_in_list:
-            # Для автомобилей из списка акции: 0.9
             total_tariff *= values.COEFF_PROMO_CAMPAIGN
-        # Для остальных (не в списке, не GEELY): коэффициент 1.0 (не применяется)
             
         if licensed_parts and program_name in ["КАСКО-Оптима", "КАСКО-Профит"] and vehicle_age_years >= 3:
             total_tariff *= values.COEFF_LICENSED_PARTS
+
+        if green_plates:
+            total_tariff *= values.COEFF_GREEN_PLATES
 
         if program_name == "КАСКО-Премиум":
             total_tariff *= values.PREMIUM_COEFF_BASE
@@ -207,12 +203,9 @@ def calculate_final_premium(data):
         if program_name == "КАСКО-Премиум":
             premium_amount += values.PREMIUM_ADD_SERVICES_COST
 
-        # Сначала применяем коэффициент разовой оплаты к базовой сумме
         premium_with_onetime_discount = premium_amount * values.COEFF_ONE_TIME_PAYMENT
         
-        # Для ежеквартальной - берем разовую сумму (которая уже 100%) и добавляем 10%
         if quarterly_payment:
-            # Ежеквартальная = разовая × 1.1 (разовая воспринимается как 100%)
             final_premium = premium_with_onetime_discount * values.COEFF_QUARTERLY_PAYMENT
         else:
             final_premium = premium_with_onetime_discount
@@ -225,6 +218,5 @@ def calculate_final_premium(data):
         return None, f"Ошибка при расчете премии: {str(e)}"
 
 def calculate_quarterly_premium(final_premium):
-    """Не используется - расчет происходит в calculate_final_premium с quarterly_payment=True"""
     quarterly_premium = final_premium * values.COEFF_QUARTERLY_PAYMENT
     return round(quarterly_premium)
