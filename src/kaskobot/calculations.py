@@ -18,7 +18,8 @@ def define_age(manufacture_year=None):
     current_year = current_date.year
     current_month = current_date.month
     
-    max_vehicle_age = values.PROMO_MAX_VEHICLE_AGE if is_promo_campaign_active() else 7
+    # Всегда максимальный возраст 7 лет
+    max_vehicle_age = 7
     min_allowed_year = current_year - max_vehicle_age
 
     if manufacture_year < min_allowed_year:
@@ -38,7 +39,7 @@ def define_age(manufacture_year=None):
     return max(0, min(age, max_vehicle_age)), is_new_vehicle, ""
 
 def check_vehicle_age_eligibility(program_name, vehicle_age_years):
-    max_age = values.PROMO_MAX_VEHICLE_AGE if is_promo_campaign_active() else 7
+    max_age = 7
     if vehicle_age_years > max_age:
         return False, f"Возраст ТС превышает {max_age} лет, страхование недоступно."
     return True, ""
@@ -137,12 +138,9 @@ def calculate_k_territory(territory_option, vehicle_type_group):
         return values.TERRITORY_RATE_RB_ONLY
     return values.TERRITORY_RATE_ALL_TERRITORIES
 
-def check_promo_eligibility(vehicle_price_usd, is_in_list):
+def check_promo_eligibility(is_in_list):
     """Проверяет соответствие условиям рекламной акции"""
     if not is_promo_campaign_active():
-        return False
-    
-    if vehicle_price_usd < values.PROMO_MIN_INSURANCE_SUM:
         return False
     
     if not is_in_list:
@@ -186,7 +184,7 @@ def calculate_final_premium(data):
             total_tariff *= values.CREDIT_LEASING_PLEDGE_COEFF
 
         # Применение коэффициентов согласно приказу O0090
-        promo_eligible = check_promo_eligibility(vehicle_price_usd, is_in_list)
+        promo_eligible = check_promo_eligibility(is_in_list)
         
         if is_geely:
             # Для GEELY: 0.75 * 0.9 = 0.675
@@ -209,18 +207,24 @@ def calculate_final_premium(data):
         if program_name == "КАСКО-Премиум":
             premium_amount += values.PREMIUM_ADD_SERVICES_COST
 
+        # Сначала применяем коэффициент разовой оплаты к базовой сумме
+        premium_with_onetime_discount = premium_amount * values.COEFF_ONE_TIME_PAYMENT
+        
+        # Для ежеквартальной - берем разовую сумму (которая уже 100%) и добавляем 10%
         if quarterly_payment:
-            premium_amount *= values.COEFF_QUARTERLY_PAYMENT
+            # Ежеквартальная = разовая × 1.1 (разовая воспринимается как 100%)
+            final_premium = premium_with_onetime_discount * values.COEFF_QUARTERLY_PAYMENT
         else:
-            premium_amount *= values.COEFF_ONE_TIME_PAYMENT
+            final_premium = premium_with_onetime_discount
 
         min_premium = values.MIN_PREMIUMS_PASSENGER.get(program_name)
-        final_premium = max(premium_amount, min_premium) if min_premium is not None else premium_amount
+        final_premium = max(final_premium, min_premium) if min_premium is not None else final_premium
 
         return round(final_premium), ""
     except Exception as e:
         return None, f"Ошибка при расчете премии: {str(e)}"
 
 def calculate_quarterly_premium(final_premium):
+    """Не используется - расчет происходит в calculate_final_premium с quarterly_payment=True"""
     quarterly_premium = final_premium * values.COEFF_QUARTERLY_PAYMENT
     return round(quarterly_premium)
