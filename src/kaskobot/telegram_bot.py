@@ -154,7 +154,7 @@ class TelegramBot:
             user_data[chat_id]["vehicle_price_usd"] = price
             user_data[chat_id]["vehicle_price_full"] = price
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY", "ИНАЯ МАРКА")
+            markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
             self.bot.send_message(chat_id, "Выберите марку автомобиля", reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_VEHICLE_MAKE)
         else:
@@ -165,8 +165,8 @@ class TelegramBot:
         chat_id = message.chat.id
         response = message.text.upper()
 
-        if response == "GEELY":
-            user_data[chat_id]["vehicle_make"] = "GEELY"
+        if response == "GEELY/BELGEE":
+            user_data[chat_id]["vehicle_make"] = "GEELY/BELGEE"
             user_data[chat_id]["is_geely"] = True
             user_data[chat_id]["is_in_list"] = True
             user_data[chat_id]["is_multidrive"] = True
@@ -183,14 +183,14 @@ class TelegramBot:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add("BMW")
             for make in values.VEHICLE_MAKES_IN_LIST:
-                if make not in ["GEELY", "BMW"]:
+                if make not in ["GEELY/BELGEE", "BMW"]:
                     markup.add(make)
             markup.add("ДРУГОЕ")
             self.bot.send_message(chat_id, "Выберите автомобиль из списка", reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_IN_LIST)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY", "ИНАЯ МАРКА")
+            markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
 
     def handle_bmw_model(self, message):
@@ -225,7 +225,7 @@ class TelegramBot:
         chat_id = message.chat.id
         response = message.text.upper()
 
-        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make != "GEELY"]
+        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make != "GEELY/BELGEE"]
         
         if response == "BMW":
             user_data[chat_id]["vehicle_make"] = "BMW"

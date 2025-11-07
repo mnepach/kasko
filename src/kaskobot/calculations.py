@@ -198,17 +198,17 @@ def calculate_final_premium(data):
         if program_name == "КАСКО-Премиум":
             total_tariff *= values.PREMIUM_COEFF_BASE
 
+        # Базовая премия (для ежеквартальной оплаты)
         premium_amount = vehicle_price_usd * total_tariff
         
         if program_name == "КАСКО-Премиум":
             premium_amount += values.PREMIUM_ADD_SERVICES_COST
 
-        premium_with_onetime_discount = premium_amount * values.COEFF_ONE_TIME_PAYMENT
-        
-        if quarterly_payment:
-            final_premium = premium_with_onetime_discount * values.COEFF_QUARTERLY_PAYMENT
+        # Применяем скидку за разовую оплату, если не ежеквартальная
+        if not quarterly_payment:
+            final_premium = premium_amount * values.COEFF_ONE_TIME_PAYMENT
         else:
-            final_premium = premium_with_onetime_discount
+            final_premium = premium_amount
 
         min_premium = values.MIN_PREMIUMS_PASSENGER.get(program_name)
         final_premium = max(final_premium, min_premium) if min_premium is not None else final_premium
@@ -218,5 +218,4 @@ def calculate_final_premium(data):
         return None, f"Ошибка при расчете премии: {str(e)}"
 
 def calculate_quarterly_premium(final_premium):
-    quarterly_premium = final_premium * values.COEFF_QUARTERLY_PAYMENT
-    return round(quarterly_premium)
+    return round(final_premium)
