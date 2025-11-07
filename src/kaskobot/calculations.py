@@ -24,7 +24,7 @@ def define_age(manufacture_year=None):
         return None, False, "AGE_EXCEEDED"
     
     if manufacture_year > current_year:
-        return None, False, f"Ошибка: Год выпуска не может быть больше {current_year}."
+        return None, False, "AGE_EXCEEDED"
 
     is_new_vehicle = (manufacture_year == current_year)
     
@@ -177,7 +177,7 @@ def calculate_final_premium(data):
         
         total_tariff *= calculate_k_territory(territory, vehicle_type_group)
 
-        if credit_leasing_pledge:
+        if credit_leasing_pledge and not is_geely:
             total_tariff *= values.CREDIT_LEASING_PLEDGE_COEFF
 
         promo_eligible = check_promo_eligibility(is_in_list)
@@ -198,13 +198,11 @@ def calculate_final_premium(data):
         if program_name == "КАСКО-Премиум":
             total_tariff *= values.PREMIUM_COEFF_BASE
 
-        # Базовая премия (для ежеквартальной оплаты)
         premium_amount = vehicle_price_usd * total_tariff
         
         if program_name == "КАСКО-Премиум":
             premium_amount += values.PREMIUM_ADD_SERVICES_COST
 
-        # Применяем скидку за разовую оплату, если не ежеквартальная
         if not quarterly_payment:
             final_premium = premium_amount * values.COEFF_ONE_TIME_PAYMENT
         else:

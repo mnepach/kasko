@@ -19,6 +19,7 @@ class BotState(StatesGroup):
     ASK_BMW_MODEL = State()
     ASK_IS_IN_LIST = State()
     ASK_IS_MULTIDRIVE = State()
+    ASK_MULTIDRIVE_LESS_2_YEARS = State()
     ASK_DRIVER_AGE = State()
     ASK_DRIVER_EXP = State()
     ASK_TERRITORY = State()
@@ -43,6 +44,7 @@ class TelegramBot:
         self.bot.message_handler(state=BotState.ASK_BMW_MODEL)(self.handle_bmw_model)
         self.bot.message_handler(state=BotState.ASK_IS_IN_LIST)(self.handle_is_in_list)
         self.bot.message_handler(state=BotState.ASK_IS_MULTIDRIVE)(self.handle_is_multidrive)
+        self.bot.message_handler(state=BotState.ASK_MULTIDRIVE_LESS_2_YEARS)(self.handle_multidrive_less_2_years)
         self.bot.message_handler(state=BotState.ASK_DRIVER_AGE)(self.handle_driver_age)
         self.bot.message_handler(state=BotState.ASK_DRIVER_EXP)(self.handle_driver_exp)
         self.bot.message_handler(state=BotState.ASK_TERRITORY)(self.handle_territory)
@@ -50,7 +52,13 @@ class TelegramBot:
         self.bot.message_handler(state=BotState.ASK_GREEN_PLATES)(self.handle_green_plates)
         self.bot.message_handler(state=BotState.ASK_IS_LICENSED_PARTS)(self.handle_is_licensed_parts)
         self.bot.message_handler(state=BotState.ASK_QUARTERLY_PAYMENT)(self.handle_quarterly_payment)
+        self.bot.message_handler(content_types=['text'], func=lambda message: not self.bot.get_state(message.chat.id))(self.send_initial_welcome)
         self.bot.message_handler(content_types=['text'])(self.handle_unexpected_text)
+
+    def send_initial_welcome(self, message):
+        """Приветственное сообщение при первом контакте"""
+        chat_id = message.chat.id
+        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
 
     def send_welcome(self, message):
         chat_id = message.chat.id
@@ -78,9 +86,9 @@ class TelegramBot:
             current_year = datetime.now().year
             max_vehicle_age = 7
             min_allowed_year = current_year - max_vehicle_age
-            return min_allowed_year <= year <= current_year, year >= min_allowed_year
+            return min_allowed_year <= year <= current_year, year
         except ValueError:
-            return False, False
+            return False, None
 
     def is_valid_price(self, price_str):
         try:
@@ -113,10 +121,9 @@ class TelegramBot:
         chat_id = message.chat.id
         year_str = message.text
 
-        is_valid, is_in_range = self.is_valid_year(year_str)
+        is_valid, year = self.is_valid_year(year_str)
         
         if is_valid:
-            year = int(year_str)
             user_data[chat_id]["vehicle_year"] = year
             
             age, is_new, error_message = calc.define_age(manufacture_year=year)
@@ -142,8 +149,9 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.ASK_VEHICLE_PRICE, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_VEHICLE_PRICE)
         else:
-            self.bot.send_message(chat_id, strings.INVALID_INPUT)
-            self.bot.set_state(chat_id, BotState.ASK_VEHICLE_YEAR)
+            self.bot.send_message(chat_id, strings.AGE_EXCEEDED_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
+            self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
+            self.bot.delete_state(chat_id)
 
     def handle_vehicle_price(self, message):
         chat_id = message.chat.id
@@ -171,8 +179,7 @@ class TelegramBot:
             user_data[chat_id]["is_in_list"] = True
             user_data[chat_id]["is_multidrive"] = True
             user_data[chat_id]["drivers_known"] = False
-            user_data[chat_id]["num_drivers"] = 1
-            user_data[chat_id]["drivers_data"] = [{"age": 0, "experience": 0}]
+            user_data[chat_id]["credit_leasing_pledge"] = False
             
             self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
@@ -261,11 +268,31 @@ class TelegramBot:
             
             user_data[chat_id]["is_multidrive"] = not can_list_drivers
             user_data[chat_id]["drivers_known"] = can_list_drivers
-            user_data[chat_id]["num_drivers"] = 1
-            user_data[chat_id]["drivers_data"] = []
             
-            self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
-            self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+            if user_data[chat_id]["is_multidrive"]:
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+                self.bot.send_message(chat_id, strings.ASK_MULTIDRIVE_LESS_2_YEARS, reply_markup=markup)
+                self.bot.set_state(chat_id, BotState.ASK_MULTIDRIVE_LESS_2_YEARS)
+            else:
+                self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
+                self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+        else:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+
+    def handle_multidrive_less_2_years(self, message):
+        chat_id = message.chat.id
+        response = message.text.lower().replace("ё", "е")
+
+        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
+            user_data[chat_id]["multidrive_has_less_2_years"] = (response == strings.YES_BUTTON.lower())
+            
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
+            self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
@@ -277,7 +304,7 @@ class TelegramBot:
 
         is_valid, age = self.is_valid_driver_age(response)
         if is_valid:
-            user_data[chat_id]["drivers_data"] = [{"age": age, "experience": 0}]
+            user_data[chat_id]["driver_age"] = age
             self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
         else:
@@ -291,21 +318,18 @@ class TelegramBot:
         if user_data[chat_id].get("is_geely", False):
             max_exp = 70
         else:
-            max_exp = user_data[chat_id]["drivers_data"][0]["age"] - 16
+            max_exp = user_data[chat_id].get("driver_age", 80) - 16
 
         is_valid, exp = self.is_valid_driver_exp(response, max_exp)
         if is_valid:
-            user_data[chat_id]["drivers_data"][0]["experience"] = exp
+            user_data[chat_id]["driver_exp"] = exp
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
             self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
         else:
-            if user_data[chat_id].get("is_geely", False):
-                self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
-            else:
-                self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
+            self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
 
     def handle_territory(self, message):
@@ -314,10 +338,17 @@ class TelegramBot:
 
         if response in ["республика беларусь", "республика беларусь и за ее пределами"]:
             user_data[chat_id]["territory"] = "Республика Беларусь" if response == "республика беларусь" else "Республика Беларусь и за её пределами"
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_CREDIT_LEASING_PLEDGE, reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_IS_CREDIT_LEASING_PLEDGE)
+            
+            if user_data[chat_id].get("is_geely", False):
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+                self.bot.send_message(chat_id, strings.ASK_GREEN_PLATES, reply_markup=markup)
+                self.bot.set_state(chat_id, BotState.ASK_GREEN_PLATES)
+            else:
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+                self.bot.send_message(chat_id, strings.ASK_IS_CREDIT_LEASING_PLEDGE, reply_markup=markup)
+                self.bot.set_state(chat_id, BotState.ASK_IS_CREDIT_LEASING_PLEDGE)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
@@ -376,33 +407,49 @@ class TelegramBot:
         dummy_message = type('obj', (object,), {'chat': type('obj', (object,), {'id': chat_id})})()
         self.calculate_and_send_premium(dummy_message)
 
+    def prepare_calculation_data(self, chat_id, quarterly_payment=False):
+        data = user_data.get(chat_id, {})
+        
+        drivers_data = []
+        if data.get("drivers_known", False):
+            drivers_data = [{
+                "age": data.get("driver_age", 25),
+                "experience": data.get("driver_exp", 0)
+            }]
+        elif data.get("is_multidrive", False):
+            multidrive_exp = 0 if data.get("multidrive_has_less_2_years", False) else 2
+            drivers_data = [{
+                "age": 25,
+                "experience": multidrive_exp
+            }]
+        
+        return {
+            "vehicle_age_years": data.get("vehicle_age_years", 0),
+            "vehicle_price_usd": data.get("vehicle_price_usd", 0),
+            "vehicle_price_full": data.get("vehicle_price_full", 0),
+            "vehicle_type_group": values.VEHICLE_TYPE_PASSENGER_LIGHT_TRUCK,
+            "drivers_known": data.get("drivers_known", False),
+            "drivers_data": drivers_data,
+            "is_geely": data.get("is_geely", False),
+            "is_multidrive": data.get("is_multidrive", False),
+            "territory": data.get("territory", "Республика Беларусь"),
+            "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
+            "licensed_parts": data.get("licensed_parts", False),
+            "is_in_list": data.get("is_in_list", False),
+            "green_plates": data.get("green_plates", False),
+            "quarterly_payment": quarterly_payment
+        }
+
     def calculate_and_send_premium(self, message):
         chat_id = message.chat.id
         try:
-            data = user_data.get(chat_id, {})
             response_message = "Предварительный расчет страховой премии:\n\n"
             has_results = False
             error_messages = []
 
             for program_name in kasko_program.AVAILABLE_PROGRAMS.keys():
-                calculation_data = {
-                    "program": program_name,
-                    "vehicle_age_years": data.get("vehicle_age_years", 0),
-                    "vehicle_price_usd": data.get("vehicle_price_usd", 0),
-                    "vehicle_price_full": data.get("vehicle_price_full", 0),
-                    "vehicle_type_group": values.VEHICLE_TYPE_PASSENGER_LIGHT_TRUCK,
-                    "drivers_known": data.get("drivers_known", False),
-                    "num_drivers": data.get("num_drivers", 1),
-                    "drivers_data": data.get("drivers_data", []),
-                    "is_geely": data.get("is_geely", False),
-                    "is_multidrive": data.get("is_multidrive", False),
-                    "territory": data.get("territory", "Республика Беларусь"),
-                    "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
-                    "licensed_parts": data.get("licensed_parts", False),
-                    "is_in_list": data.get("is_in_list", False),
-                    "green_plates": data.get("green_plates", False),
-                    "quarterly_payment": False
-                }
+                calculation_data = self.prepare_calculation_data(chat_id, quarterly_payment=False)
+                calculation_data["program"] = program_name
 
                 final_premium, error_message = calc.calculate_final_premium(calculation_data)
                 if final_premium is not None:
@@ -434,38 +481,18 @@ class TelegramBot:
             user_data[chat_id]["quarterly_payment"] = (response == strings.YES_BUTTON.lower())
             if user_data[chat_id]["quarterly_payment"]:
                 try:
-                    data = user_data.get(chat_id, {})
                     response_message = "Предварительный расчет страховой премии при ежеквартальной оплате:\n\n"
                     has_results = False
                     error_messages = []
 
                     for program_name in kasko_program.AVAILABLE_PROGRAMS.keys():
-                        calculation_data = {
-                            "program": program_name,
-                            "vehicle_age_years": data.get("vehicle_age_years", 0),
-                            "vehicle_price_usd": data.get("vehicle_price_usd", 0),
-                            "vehicle_price_full": data.get("vehicle_price_full", 0),
-                            "vehicle_type_group": values.VEHICLE_TYPE_PASSENGER_LIGHT_TRUCK,
-                            "drivers_known": data.get("drivers_known", False),
-                            "num_drivers": data.get("num_drivers", 1),
-                            "drivers_data": data.get("drivers_data", []),
-                            "is_geely": data.get("is_geely", False),
-                            "is_multidrive": data.get("is_multidrive", False),
-                            "territory": data.get("territory", "Республика Беларусь"),
-                            "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
-                            "licensed_parts": data.get("licensed_parts", False),
-                            "is_in_list": data.get("is_in_list", False),
-                            "green_plates": data.get("green_plates", False),
-                            "quarterly_payment": True
-                        }
+                        calculation_data = self.prepare_calculation_data(chat_id, quarterly_payment=True)
+                        calculation_data["program"] = program_name
 
                         final_premium, error_message = calc.calculate_final_premium(calculation_data)
                         if final_premium is not None:
                             final_premium = round(final_premium)
                             response_message += f"{program_name}: {final_premium} USD\n"
-                            has_results = True
-                        else:
-                            error_messages.append(f"{program_name}: {error_message}")
 
                     if has_results:
                         response_message += "\nДля точного расчета обратитесь в страховую компанию."
