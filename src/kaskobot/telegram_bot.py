@@ -443,7 +443,7 @@ class TelegramBot:
     def calculate_and_send_premium(self, message):
         chat_id = message.chat.id
         try:
-            response_message = "Предварительный расчет страховой премии:\n\n"
+            response_message = "Предварительная стоимость полиса при единовременной оплате:\n\n"
             has_results = False
             error_messages = []
 
@@ -460,7 +460,7 @@ class TelegramBot:
                     error_messages.append(f"{program_name}: {error_message}")
 
             if has_results:
-                response_message += "\nДля точного расчета обратитесь в страховую компанию."
+                response_message += "\nДля точного расчета обратитесь к @StrahovanieMinsk"
                 if error_messages:
                     response_message += "\n\nНе рассчитаны следующие программы:\n" + "\n".join(error_messages)
             else:

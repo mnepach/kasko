@@ -28,10 +28,9 @@ DRIVER_AGE_EXP_RATES = {
     "2_plus_years": {"16-24": 1.0, "25-34": 0.95, "35_plus": 0.85}
 }
 
-MULTIDRIVE_STANDARD = 1.15
-# возможно стоит продублирвать не для джили MULTIDRIVE_GEELY_LESS_2_YEARS = 1.05
+MULTIDRIVE_STANDARD = 1.15 # меньше 2х лет 
 MULTIDRIVE_2_PLUS_YEARS_EXP = 1.00
-
+# только эти для джили 
 MULTIDRIVE_GEELY_2_PLUS_YEARS = 1.00
 MULTIDRIVE_GEELY_LESS_2_YEARS = 1.05
 
