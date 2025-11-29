@@ -8,7 +8,6 @@ from . import calculations as calc
 from . import program as kasko_program
 from ..res import strings as strings
 from ..res import values as values
-import re
 
 user_data = {}
 user_has_started = {}
@@ -38,7 +37,7 @@ class TelegramBot:
     def register_handlers(self):
         self.bot.message_handler(commands=['start'])(self.send_welcome)
         self.bot.message_handler(commands=['help'])(self.send_help)
-        self.bot.message_handler(content_types=['sticker', 'animation', 'photo'])(self.handle_invalid_content)
+        self.bot.message_handler(content_types=['sticker','animation','photo','document','video','voice','location','contact'])(self.handle_invalid_content)
         self.bot.message_handler(state=BotState.ASK_VEHICLE_YEAR)(self.handle_vehicle_year)
         self.bot.message_handler(state=BotState.ASK_VEHICLE_PRICE)(self.handle_vehicle_price)
         self.bot.message_handler(state=BotState.ASK_VEHICLE_MAKE)(self.handle_vehicle_make)
@@ -53,383 +52,283 @@ class TelegramBot:
         self.bot.message_handler(state=BotState.ASK_GREEN_PLATES)(self.handle_green_plates)
         self.bot.message_handler(state=BotState.ASK_IS_LICENSED_PARTS)(self.handle_is_licensed_parts)
         self.bot.message_handler(state=BotState.ASK_QUARTERLY_PAYMENT)(self.handle_quarterly_payment)
-        self.bot.message_handler(content_types=['text'], func=lambda message: not self.bot.get_state(message.chat.id))(self.send_initial_welcome)
-        self.bot.message_handler(content_types=['text'])(self.handle_unexpected_text)
+        self.bot.message_handler(func=lambda m: True)(self.catch_all)
 
-    def send_initial_welcome(self, message):
+    def catch_all(self, message):
         chat_id = message.chat.id
         if chat_id not in user_has_started or not user_has_started[chat_id]:
-            self.bot.send_message(chat_id, strings.INITIAL_WELCOME_MESSAGE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
+            user_has_started[chat_id] = True
+            self.bot.send_message(chat_id, strings.INITIAL_WELCOME_MESSAGE, parse_mode='Markdown', disable_web_page_preview=True)
         else:
-            self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
+            self.bot.send_message(chat_id, strings.THANK_YOU, parse_mode='Markdown')
 
     def send_welcome(self, message):
         chat_id = message.chat.id
         user_has_started[chat_id] = True
         user_data[chat_id] = {}
-        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
+        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, parse_mode='Markdown', disable_web_page_preview=True)
         self.bot.send_message(chat_id, strings.ASK_VEHICLE_YEAR)
         self.bot.set_state(chat_id, BotState.ASK_VEHICLE_YEAR)
 
     def send_help(self, message):
-        chat_id = message.chat.id
-        self.bot.send_message(chat_id, strings.HELP_MESSAGE, parse_mode='Markdown')
+        self.bot.send_message(message.chat.id, strings.HELP_MESSAGE, parse_mode='Markdown', disable_web_page_preview=True)
 
     def handle_invalid_content(self, message):
-        chat_id = message.chat.id
-        self.bot.send_message(chat_id, "Ошибка: отправка стикеров, GIF или фото не поддерживается. Пожалуйста, используйте текстовый ввод.")
+        self.bot.send_message(message.chat.id, "Пожалуйста, используйте только текст и кнопки")
 
-    def handle_unexpected_text(self, message):
-        chat_id = message.chat.id
-        if not self.bot.get_state(chat_id):
-            self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
-
-    def is_valid_year(self, year_str):
+    def is_valid_year(self, text):
         try:
-            year = int(year_str)
-            current_year = datetime.now().year
-            max_vehicle_age = 7
-            min_allowed_year = current_year - max_vehicle_age
-            return min_allowed_year <= year <= current_year, year
-        except ValueError:
+            year = int(text)
+            current = datetime.now().year
+            return current - 7 <= year <= current, year
+        except:
             return False, None
 
-    def is_valid_price(self, price_str):
+    def is_valid_price(self, text):
         try:
-            price = float(price_str.replace(',', '.'))
-            max_price = 30_000_000
-            return 0 < price <= max_price
-        except ValueError:
-            return False
-
-    def is_valid_number(self, text):
-        return text.strip().isdigit()
-
-    def is_valid_driver_age(self, age_str):
-        if not self.is_valid_number(age_str):
+            price = float(text.replace(',', '.'))
+            return 0 < price <= 30_000_000, price
+        except:
             return False, None
-        age = int(age_str.strip())
-        if 16 <= age <= 80:
-            return True, age
-        return False, None
+
+    def is_valid_age(self, text):
+        try:
+            age = int(text)
+            return 16 <= age <= 80, age
+        except:
+            return False, None
 
     def handle_vehicle_year(self, message):
         chat_id = message.chat.id
-        year_str = message.text
-
-        is_valid, year = self.is_valid_year(year_str)
-        
-        if is_valid:
-            user_data[chat_id]["vehicle_year"] = year
-            
-            age, is_new, error_message = calc.define_age(manufacture_year=year)
-            
-            if error_message == "AGE_EXCEEDED":
-                self.bot.send_message(
-                    chat_id, 
-                    strings.AGE_EXCEEDED_MESSAGE,
-                    reply_markup=types.ReplyKeyboardRemove()
-                )
-                self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
-                self.bot.delete_state(chat_id)
-                return
-            
-            if age is None:
-                self.bot.send_message(chat_id, error_message or strings.INVALID_INPUT)
-                self.bot.set_state(chat_id, BotState.ASK_VEHICLE_YEAR)
-                return
-                
-            user_data[chat_id]["vehicle_age_years"] = age
-            user_data[chat_id]["is_new_vehicle"] = is_new
-            
-            self.bot.send_message(chat_id, strings.ASK_VEHICLE_PRICE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
-            self.bot.set_state(chat_id, BotState.ASK_VEHICLE_PRICE)
-        else:
-            self.bot.send_message(chat_id, strings.AGE_EXCEEDED_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
-            self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
+        valid, year = self.is_valid_year(message.text)
+        if not valid:
+            self.bot.send_message(chat_id, strings.AGE_EXCEEDED_MESSAGE, parse_mode='Markdown')
+            self.bot.send_message(chat_id, strings.THANK_YOU, parse_mode='Markdown')
             self.bot.delete_state(chat_id)
+            return
+
+        age, is_new, err = calc.define_age(year)
+        if err == "AGE_EXCEEDED":
+            self.bot.send_message(chat_id, strings.AGE_EXCEEDED_MESSAGE, parse_mode='Markdown')
+            self.bot.send_message(chat_id, strings.THANK_YOU, parse_mode='Markdown')
+            self.bot.delete_state(chat_id)
+            return
+
+        user_data[chat_id].update({
+            "vehicle_year": year,
+            "vehicle_age_years": age,
+            "is_new_vehicle": is_new
+        })
+
+        self.bot.send_message(chat_id, strings.ASK_VEHICLE_PRICE, parse_mode='Markdown', disable_web_page_preview=True)
+        self.bot.set_state(chat_id, BotState.ASK_VEHICLE_PRICE)
 
     def handle_vehicle_price(self, message):
         chat_id = message.chat.id
-        price_str = message.text
+        valid, price = self.is_valid_price(message.text)
+        if not valid:
+            self.bot.send_message(chat_id, "Введите корректную сумму цифрами (например: 25000)")
+            return
 
-        if self.is_valid_price(price_str):
-            price = float(price_str.replace(',', '.'))
-            user_data[chat_id]["vehicle_price_usd"] = price
-            user_data[chat_id]["vehicle_price_full"] = price
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
-            self.bot.send_message(chat_id, "Выберите марку автомобиля", reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_VEHICLE_MAKE)
-        else:
-            self.bot.send_message(chat_id, f"{strings.INVALID_INPUT} Страховая сумма должна быть от 1 до 30,000,000 USD.")
-            self.bot.set_state(chat_id, BotState.ASK_VEHICLE_PRICE)
+        user_data[chat_id]["vehicle_price_usd"] = price
+        user_data[chat_id]["vehicle_price_full"] = price
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
+        self.bot.send_message(chat_id, "Выберите марку автомобиля:", reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_VEHICLE_MAKE)
 
     def handle_vehicle_make(self, message):
         chat_id = message.chat.id
-        response = message.text.upper()
+        text = message.text.upper()
 
-        if response == "GEELY/BELGEE":
-            user_data[chat_id]["vehicle_make"] = "GEELY/BELGEE"
-            user_data[chat_id]["is_geely"] = True
-            user_data[chat_id]["is_in_list"] = True
-            user_data[chat_id]["is_multidrive"] = True
-            user_data[chat_id]["drivers_known"] = False
-            user_data[chat_id]["credit_leasing_pledge"] = False
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        if text == "GEELY/BELGEE":
+            user_data[chat_id].update({
+                "is_geely": True,
+                "is_in_list": True,
+                "is_multidrive": True,
+                "drivers_known": False,
+                "credit_leasing_pledge": False
+            })
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
             self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
-            
-        elif response == "ИНАЯ МАРКА":
-            user_data[chat_id]["is_geely"] = False
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("BMW")
-            for make in values.VEHICLE_MAKES_IN_LIST:
-                if make not in ["GEELY/BELGEE", "BMW"]:
-                    markup.add(make)
-            markup.add("ДРУГОЕ")
-            self.bot.send_message(chat_id, "Выберите автомобиль из списка", reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_IS_IN_LIST)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+            return
 
-    def handle_bmw_model(self, message):
-        chat_id = message.chat.id
-        response = message.text
-        
-        if response in values.BMW_M_MODELS:
-            user_data[chat_id]["bmw_model"] = response
-            user_data[chat_id]["is_in_list"] = False
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
-            
-        elif response == "Другая модель":
-            user_data[chat_id]["bmw_model"] = "Другая модель"
-            user_data[chat_id]["is_in_list"] = True
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
-            for model in values.BMW_M_MODELS:
-                markup.add(model)
-            markup.add("Другая модель")
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+        if text == "ИНАЯ МАРКА":
+            user_data[chat_id]["is_geely"] = False
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+            markup.add("BMW")
+            for m in values.VEHICLE_MAKES_IN_LIST:
+                if m not in ["GEELY/BELGEE", "BMW"]:
+                    markup.add(m)
+            markup.add("ДРУГОЕ")
+            self.bot.send_message(chat_id, "Выберите марку из списка:", reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_IS_IN_LIST)
+            return
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        markup.add("GEELY/BELGEE", "ИНАЯ МАРКА")
+        self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
 
     def handle_is_in_list(self, message):
         chat_id = message.chat.id
-        response = message.text.upper()
+        text = message.text.upper()
 
-        valid_makes = [make for make in values.VEHICLE_MAKES_IN_LIST if make != "GEELY/BELGEE"]
-        
-        if response == "BMW":
+        if text == "BMW":
             user_data[chat_id]["vehicle_make"] = "BMW"
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             for model in values.BMW_M_MODELS:
                 markup.add(model)
             markup.add("Другая модель")
             self.bot.send_message(chat_id, "Выберите модель BMW:", reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_BMW_MODEL)
-            
-        elif response in valid_makes or response == "ДРУГОЕ":
-            user_data[chat_id]["vehicle_make"] = response
-            user_data[chat_id]["is_in_list"] = response in valid_makes
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            for make in valid_makes:
-                markup.add(make)
-            markup.add("ДРУГОЕ")
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+            return
+
+        user_data[chat_id]["is_in_list"] = text in values.VEHICLE_MAKES_IN_LIST
+        user_data[chat_id]["vehicle_make"] = text if text != "ДРУГОЕ" else "Другое"
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
+        markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+        self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
+
+    def handle_bmw_model(self, message):
+        chat_id = message.chat.id
+        user_data[chat_id]["is_in_list"] = message.text not in values.BMW_M_MODELS
+        user_data[chat_id]["bmw_model"] = message.text
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
+        markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+        self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
 
     def handle_is_multidrive(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
-
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            can_list_drivers = (response == strings.YES_BUTTON.lower())
-            
-            user_data[chat_id]["is_multidrive"] = not can_list_drivers
-            user_data[chat_id]["drivers_known"] = can_list_drivers
-            
-            if user_data[chat_id]["is_multidrive"]:
-                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-                self.bot.send_message(chat_id, strings.ASK_MULTIDRIVE_LESS_2_YEARS, reply_markup=markup)
-                self.bot.set_state(chat_id, BotState.ASK_MULTIDRIVE_LESS_2_YEARS)
-            else:
-                self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE, reply_markup=types.ReplyKeyboardRemove())
-                self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+        ans = message.text.strip().lower()
+        if ans == strings.YES_BUTTON.lower():
+            user_data[chat_id]["is_multidrive"] = False
+            user_data[chat_id]["drivers_known"] = True
+            self.bot.send_message(chat_id, strings.ASK_DRIVER_AGE)
+            self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+        elif ans == strings.NO_BUTTON.lower():
+            user_data[chat_id]["is_multidrive"] = True
+            user_data[chat_id]["drivers_known"] = False
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
+            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+            self.bot.send_message(chat_id, strings.ASK_MULTIDRIVE_LESS_2_YEARS, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_MULTIDRIVE_LESS_2_YEARS)
         else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
 
     def handle_multidrive_less_2_years(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
+        user_data[chat_id]["multidrive_has_less_2_years"] = message.text.lower() == strings.YES_BUTTON.lower()
 
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            has_less_2_years = (response == strings.YES_BUTTON.lower())
-            user_data[chat_id]["multidrive_has_less_2_years"] = has_less_2_years
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
-            self.bot.send_message(chat_id, strings.ASK_TERRITORY, parse_mode='Markdown', reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False, row_width=1)
+        markup.add("Республика Беларусь")
+        markup.add("Республика Беларусь и за её пределами")
+        self.bot.send_message(chat_id, strings.ASK_TERRITORY, parse_mode='Markdown', reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
 
     def handle_driver_age(self, message):
         chat_id = message.chat.id
-        response = message.text
+        valid, age = self.is_valid_age(message.text)
+        if not valid:
+            self.bot.send_message(chat_id, "Возраст должен быть от 16 до 80 лет")
+            return
+        user_data[chat_id]["driver_age"] = age
 
-        is_valid, age = self.is_valid_driver_age(response)
-        if is_valid:
-            user_data[chat_id]["driver_age"] = age
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
-            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
-        else:
-            self.bot.send_message(chat_id, "Введите возраст водителя только цифрами (например: 25). Возраст должен быть от 16 до 80 лет.")
-            self.bot.set_state(chat_id, BotState.ASK_DRIVER_AGE)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
+        self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
 
     def handle_driver_exp(self, message):
         chat_id = message.chat.id
-        response = message.text.lower()
-        
-        if response == strings.DRIVER_EXP_LESS_1.lower():
+        t = message.text.lower()
+        if t == strings.DRIVER_EXP_LESS_1.lower():
             exp = 0
-        elif response == strings.DRIVER_EXP_1_TO_2.lower():
+        elif t == strings.DRIVER_EXP_1_TO_2.lower():
             exp = 1
-        elif response == strings.DRIVER_EXP_MORE_2.lower():
+        elif t == strings.DRIVER_EXP_MORE_2.lower():
             exp = 2
         else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
             return
-        
+
         user_data[chat_id]["driver_exp"] = exp
-        
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False, row_width=1)
+        markup.add("Республика Беларусь")
+        markup.add("Республика Беларусь и за её пределами")
         self.bot.send_message(chat_id, strings.ASK_TERRITORY, parse_mode='Markdown', reply_markup=markup)
         self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
 
     def handle_territory(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
+        text = message.text
+        territory = "Республика Беларусь и за её пределами" if "за её" in text or "за ее" in text else "Республика Беларусь"
+        user_data[chat_id]["territory"] = territory
 
-        if response in ["республика беларусь", "республика беларусь и за ее пределами"]:
-            user_data[chat_id]["territory"] = "Республика Беларусь" if response == "республика беларусь" else "Республика Беларусь и за её пределами"
-            
-            if user_data[chat_id].get("is_geely", False):
-                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-                self.bot.send_message(chat_id, strings.ASK_GREEN_PLATES, reply_markup=markup)
-                self.bot.set_state(chat_id, BotState.ASK_GREEN_PLATES)
-            else:
-                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-                self.bot.send_message(chat_id, strings.ASK_IS_CREDIT_LEASING_PLEDGE, reply_markup=markup)
-                self.bot.set_state(chat_id, BotState.ASK_IS_CREDIT_LEASING_PLEDGE)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
-
-    def handle_is_credit_leasing_pledge(self, message):
-        chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
-
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            user_data[chat_id]["credit_leasing_pledge"] = (response == strings.YES_BUTTON.lower())
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        if user_data[chat_id].get("is_geely", False):
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
             self.bot.send_message(chat_id, strings.ASK_GREEN_PLATES, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_GREEN_PLATES)
         else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+            self.bot.send_message(chat_id, strings.ASK_IS_CREDIT_LEASING_PLEDGE, reply_markup=markup)
+            self.bot.set_state(chat_id, BotState.ASK_IS_CREDIT_LEASING_PLEDGE)
+
+    def handle_is_credit_leasing_pledge(self, message):
+        chat_id = message.chat.id
+        user_data[chat_id]["credit_leasing_pledge"] = message.text.lower() == strings.YES_BUTTON.lower()
+
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
+        markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+        self.bot.send_message(chat_id, strings.ASK_GREEN_PLATES, reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_GREEN_PLATES)
 
     def handle_green_plates(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
+        user_data[chat_id]["green_plates"] = message.text.lower() == strings.YES_BUTTON.lower()
 
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            user_data[chat_id]["green_plates"] = (response == strings.YES_BUTTON.lower())
-            self.proceed_to_licensed_parts_or_calc(chat_id)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
-
-    def proceed_to_licensed_parts_or_calc(self, chat_id):
         if user_data[chat_id]["vehicle_age_years"] < 3:
             user_data[chat_id]["licensed_parts"] = False
-            self.calculate_and_send_premium_from_state(chat_id)
+            self.calculate_and_send_premium(message)
         else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
             self.bot.send_message(chat_id, strings.ASK_IS_LICENSED_PARTS, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_LICENSED_PARTS)
 
     def handle_is_licensed_parts(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
-
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            user_data[chat_id]["licensed_parts"] = (response == strings.YES_BUTTON.lower())
-            self.calculate_and_send_premium_from_state(chat_id)
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
-
-    def calculate_and_send_premium_from_state(self, chat_id):
-        dummy_message = type('obj', (object,), {'chat': type('obj', (object,), {'id': chat_id})})()
-        self.calculate_and_send_premium(dummy_message)
+        user_data[chat_id]["licensed_parts"] = message.text.lower() == strings.YES_BUTTON.lower()
+        self.calculate_and_send_premium(message)
 
     def prepare_calculation_data(self, chat_id, quarterly_payment=False):
         data = user_data.get(chat_id, {})
-        
+
         drivers_data = []
-        if data.get("drivers_known", False):
-            drivers_data = [{
-                "age": data.get("driver_age", 25),
-                "experience": data.get("driver_exp", 0)
-            }]
-        elif data.get("is_multidrive", False):
-            multidrive_exp = 0 if data.get("multidrive_has_less_2_years", False) else 2
-            drivers_data = [{
-                "age": 25,
-                "experience": multidrive_exp
-            }]
-        
+        if data.get("drivers_known"):
+            drivers_data = [{"age": data.get("driver_age", 30), "experience": data.get("driver_exp", 2)}]
+        elif data.get("is_multidrive"):
+            exp = 0 if data.get("multidrive_has_less_2_years") else 2
+            drivers_data = [{"age": 30, "experience": exp}]
+
         return {
+            "program": None,
             "vehicle_age_years": data.get("vehicle_age_years", 0),
-            "vehicle_price_usd": data.get("vehicle_price_usd", 0),
-            "vehicle_price_full": data.get("vehicle_price_full", 0),
+            "vehicle_price_usd": data.get("vehicle_price_usd", 20000),
+            "vehicle_price_full": data.get("vehicle_price_full", 20000),
             "vehicle_type_group": values.VEHICLE_TYPE_PASSENGER_LIGHT_TRUCK,
             "drivers_known": data.get("drivers_known", False),
             "drivers_data": drivers_data,
@@ -438,104 +337,63 @@ class TelegramBot:
             "territory": data.get("territory", "Республика Беларусь"),
             "credit_leasing_pledge": data.get("credit_leasing_pledge", False),
             "licensed_parts": data.get("licensed_parts", False),
-            "is_in_list": data.get("is_in_list", False),
+            "is_in_list": data.get("is_in_list", True),
             "green_plates": data.get("green_plates", False),
             "quarterly_payment": quarterly_payment
         }
 
     def calculate_and_send_premium(self, message):
         chat_id = message.chat.id
-        try:
-            response_message = "Предварительная стоимость полиса при единовременной оплате:\n\n"
-            has_results = False
-            error_messages = []
+        response = "Предварительная стоимость полиса при единовременной оплате:\n\n"
+        has_results = False
+        errors = []
 
-            for program_name in kasko_program.AVAILABLE_PROGRAMS.keys():
-                calculation_data = self.prepare_calculation_data(chat_id, quarterly_payment=False)
-                calculation_data["program"] = program_name
-
-                final_premium, error_message = calc.calculate_final_premium(calculation_data)
-                if final_premium is not None:
-                    final_premium = round(final_premium)
-                    response_message += f"{program_name}: {final_premium} USD\n"
-                    has_results = True
-                else:
-                    error_messages.append(f"{program_name}: {error_message}")
-
-            if has_results:
-                response_message += "\nДля точного расчета обратитесь к @StrahovanieMinsk"
-                if error_messages:
-                    response_message += "\n\nНе рассчитаны следующие программы:\n" + "\n".join(error_messages)
+        for program_name in kasko_program.AVAILABLE_PROGRAMS:
+            calc_data = self.prepare_calculation_data(chat_id, quarterly_payment=False)
+            calc_data["program"] = program_name
+            premium, err = calc.calculate_final_premium(calc_data)
+            if premium is not None:
+                response += f"• {program_name}: *{premium:,} USD*\n".replace(",", " ")
+                has_results = True
             else:
-                response_message = strings.CALCULATION_ERROR.format("\n\nПричины:\n" + "\n".join(error_messages))
+                errors.append(f"{program_name}: {err}")
 
-            self.bot.send_message(chat_id, response_message, reply_markup=types.ReplyKeyboardRemove())
-            self.ask_quarterly_payment(message)
-        except Exception as e:
-            print(f"Error in calculate_and_send_premium: {str(e)}")
-            self.bot.send_message(chat_id, strings.CALCULATION_ERROR.format(str(e)), reply_markup=types.ReplyKeyboardRemove())
-            self.ask_quarterly_payment(message)
+        if has_results:
+            response += f"\nДля точного расчета — @StrahovanieMinsk"
+            if errors:
+                response += "\n\nНе рассчитано:\n" + "\n".join(errors)
+        else:
+            response = "Не удалось рассчитать.\nОбратитесь к @StrahovanieMinsk"
 
-    def ask_quarterly_payment(self, message):
-        chat_id = message.chat.id
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        self.bot.send_message(chat_id, response, parse_mode='Markdown')
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=False)
         markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
         self.bot.send_message(chat_id, strings.ASK_QUARTERLY_PAYMENT, parse_mode='Markdown', reply_markup=markup)
         self.bot.set_state(chat_id, BotState.ASK_QUARTERLY_PAYMENT)
 
     def handle_quarterly_payment(self, message):
         chat_id = message.chat.id
-        response = message.text.lower().replace("ё", "е")
+        if message.text.lower() != strings.YES_BUTTON.lower():
+            self.bot.send_message(chat_id, strings.THANK_YOU, parse_mode='Markdown')
+            self.bot.delete_state(chat_id)
+            return
 
-        if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            user_data[chat_id]["quarterly_payment"] = (response == strings.YES_BUTTON.lower())
+        response = "Предварительная стоимость при оплате частями:\n\n"
+        has_results = False
 
-            if user_data[chat_id]["quarterly_payment"]:
-                try:
-                    response_message = "Предварительный расчет страховой премии при ежеквартальной оплате:\n\n"
-                    has_results = False
-                    error_messages = []
+        for program_name in kasko_program.AVAILABLE_PROGRAMS:
+            calc_data = self.prepare_calculation_data(chat_id, quarterly_payment=True)
+            calc_data["program"] = program_name
+            premium, _ = calc.calculate_final_premium(calc_data)
+            if premium is not None:
+                response += f"• {program_name}: *{premium:,} USD*\n".replace(",", " ")
+                has_results = True
 
-                    for program_name in kasko_program.AVAILABLE_PROGRAMS.keys():
-                        calculation_data = self.prepare_calculation_data(chat_id, quarterly_payment=True)
-                        calculation_data["program"] = program_name
+        response += "\nЦена выше на ~10%.\nТочный расчёт — @StrahovanieMinsk"
 
-                        final_premium, error_message = calc.calculate_final_premium(calculation_data)
-                        if final_premium is not None:
-                            final_premium = round(final_premium)
-                            response_message += f"{program_name}: {final_premium} USD\n"
-                            has_results = True
-                        else:
-                            error_messages.append(f"{program_name}: {error_message}")
-
-                    if has_results:
-                        response_message += "\nДля точного расчета обратитесь к @StrahovanieMinsk"
-                        if error_messages:
-                            response_message += "\n\nНе рассчитаны программы:\n" + "\n".join(error_messages)
-                    else:
-                        response_message = strings.CALCULATION_ERROR.format(
-                            "\nПричины:\n" + "\n".join(error_messages)
-                        )
-
-                    self.bot.send_message(chat_id, response_message, reply_markup=types.ReplyKeyboardRemove())
-                    self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
-                    self.bot.delete_state(chat_id)
-
-                except Exception as e:
-                    print(f"Error in handle_quarterly_payment: {str(e)}")
-                    self.bot.send_message(chat_id, strings.CALCULATION_ERROR.format(str(e)),
-                                          reply_markup=types.ReplyKeyboardRemove())
-                    self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
-                    self.bot.delete_state(chat_id)
-
-            else:
-                self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
-                self.bot.delete_state(chat_id)
-
-        else:
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+        self.bot.send_message(chat_id, response, parse_mode='Markdown')
+        self.bot.send_message(chat_id, strings.THANK_YOU, parse_mode='Markdown')
+        self.bot.delete_state(chat_id)
 
     def run(self):
         print("Bot started...")
