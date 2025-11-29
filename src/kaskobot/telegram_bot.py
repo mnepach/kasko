@@ -11,6 +11,7 @@ from ..res import values as values
 import re
 
 user_data = {}
+user_has_started = {}
 
 class BotState(StatesGroup):
     ASK_VEHICLE_YEAR = State()
@@ -56,20 +57,23 @@ class TelegramBot:
         self.bot.message_handler(content_types=['text'])(self.handle_unexpected_text)
 
     def send_initial_welcome(self, message):
-        """Приветственное сообщение при первом контакте"""
         chat_id = message.chat.id
-        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
+        if chat_id not in user_has_started or not user_has_started[chat_id]:
+            self.bot.send_message(chat_id, strings.INITIAL_WELCOME_MESSAGE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
+        else:
+            self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
 
     def send_welcome(self, message):
         chat_id = message.chat.id
+        user_has_started[chat_id] = True
         user_data[chat_id] = {}
-        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
+        self.bot.send_message(chat_id, strings.WELCOME_MESSAGE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
         self.bot.send_message(chat_id, strings.ASK_VEHICLE_YEAR)
         self.bot.set_state(chat_id, BotState.ASK_VEHICLE_YEAR)
 
     def send_help(self, message):
         chat_id = message.chat.id
-        self.bot.send_message(chat_id, strings.HELP_MESSAGE)
+        self.bot.send_message(chat_id, strings.HELP_MESSAGE, parse_mode='Markdown')
 
     def handle_invalid_content(self, message):
         chat_id = message.chat.id
@@ -109,14 +113,6 @@ class TelegramBot:
             return True, age
         return False, None
 
-    def is_valid_driver_exp(self, exp_str, max_exp):
-        if not self.is_valid_number(exp_str):
-            return False, None
-        exp = int(exp_str.strip())
-        if 0 <= exp <= max_exp:
-            return True, exp
-        return False, None
-
     def handle_vehicle_year(self, message):
         chat_id = message.chat.id
         year_str = message.text
@@ -146,7 +142,7 @@ class TelegramBot:
             user_data[chat_id]["vehicle_age_years"] = age
             user_data[chat_id]["is_new_vehicle"] = is_new
             
-            self.bot.send_message(chat_id, strings.ASK_VEHICLE_PRICE, reply_markup=types.ReplyKeyboardRemove())
+            self.bot.send_message(chat_id, strings.ASK_VEHICLE_PRICE, parse_mode='Markdown', reply_markup=types.ReplyKeyboardRemove())
             self.bot.set_state(chat_id, BotState.ASK_VEHICLE_PRICE)
         else:
             self.bot.send_message(chat_id, strings.AGE_EXCEEDED_MESSAGE, reply_markup=types.ReplyKeyboardRemove())
@@ -181,7 +177,9 @@ class TelegramBot:
             user_data[chat_id]["drivers_known"] = False
             user_data[chat_id]["credit_leasing_pledge"] = False
             
-            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=types.ReplyKeyboardRemove())
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
+            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP_GEELY, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
             
         elif response == "ИНАЯ МАРКА":
@@ -210,7 +208,7 @@ class TelegramBot:
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, reply_markup=markup)
+            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
             
         elif response == "Другая модель":
@@ -219,7 +217,7 @@ class TelegramBot:
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, reply_markup=markup)
+            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2)
@@ -250,7 +248,7 @@ class TelegramBot:
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, reply_markup=markup)
+            self.bot.send_message(chat_id, strings.ASK_IS_MULTIDRIVE, parse_mode='Markdown', reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_IS_MULTIDRIVE)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -287,11 +285,12 @@ class TelegramBot:
         response = message.text.lower().replace("ё", "е")
 
         if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
-            user_data[chat_id]["multidrive_has_less_2_years"] = (response == strings.YES_BUTTON.lower())
+            has_less_2_years = (response == strings.YES_BUTTON.lower())
+            user_data[chat_id]["multidrive_has_less_2_years"] = has_less_2_years
             
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
-            self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
+            self.bot.send_message(chat_id, strings.ASK_TERRITORY, parse_mode='Markdown', reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -305,7 +304,9 @@ class TelegramBot:
         is_valid, age = self.is_valid_driver_age(response)
         if is_valid:
             user_data[chat_id]["driver_age"] = age
-            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=types.ReplyKeyboardRemove())
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
+            self.bot.send_message(chat_id, strings.ASK_DRIVER_EXP, reply_markup=markup)
             self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
         else:
             self.bot.send_message(chat_id, "Введите возраст водителя только цифрами (например: 25). Возраст должен быть от 16 до 80 лет.")
@@ -313,24 +314,26 @@ class TelegramBot:
 
     def handle_driver_exp(self, message):
         chat_id = message.chat.id
-        response = message.text
+        response = message.text.lower()
         
-        if user_data[chat_id].get("is_geely", False):
-            max_exp = 70
+        if response == strings.DRIVER_EXP_LESS_1.lower():
+            exp = 0
+        elif response == strings.DRIVER_EXP_1_TO_2.lower():
+            exp = 1
+        elif response == strings.DRIVER_EXP_MORE_2.lower():
+            exp = 2
         else:
-            max_exp = user_data[chat_id].get("driver_age", 80) - 16
-
-        is_valid, exp = self.is_valid_driver_exp(response, max_exp)
-        if is_valid:
-            user_data[chat_id]["driver_exp"] = exp
-            
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
-            self.bot.send_message(chat_id, strings.ASK_TERRITORY, reply_markup=markup)
-            self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
-        else:
-            self.bot.send_message(chat_id, f"Введите стаж вождения только цифрами (например: 5). Стаж должен быть от 0 до {max_exp} лет.")
-            self.bot.set_state(chat_id, BotState.ASK_DRIVER_EXP)
+            markup.add(strings.DRIVER_EXP_LESS_1, strings.DRIVER_EXP_1_TO_2, strings.DRIVER_EXP_MORE_2)
+            self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
+            return
+        
+        user_data[chat_id]["driver_exp"] = exp
+        
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add("Республика Беларусь", "Республика Беларусь и за её пределами")
+        self.bot.send_message(chat_id, strings.ASK_TERRITORY, parse_mode='Markdown', reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_TERRITORY)
 
     def handle_territory(self, message):
         chat_id = message.chat.id
@@ -473,6 +476,13 @@ class TelegramBot:
             self.bot.send_message(chat_id, strings.CALCULATION_ERROR.format(str(e)), reply_markup=types.ReplyKeyboardRemove())
             self.ask_quarterly_payment(message)
 
+    def ask_quarterly_payment(self, message):
+        chat_id = message.chat.id
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
+        self.bot.send_message(chat_id, strings.ASK_QUARTERLY_PAYMENT, parse_mode='Markdown', reply_markup=markup)
+        self.bot.set_state(chat_id, BotState.ASK_QUARTERLY_PAYMENT)
+
     def handle_quarterly_payment(self, message):
         chat_id = message.chat.id
         response = message.text.lower().replace("ё", "е")
@@ -480,7 +490,6 @@ class TelegramBot:
         if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
             user_data[chat_id]["quarterly_payment"] = (response == strings.YES_BUTTON.lower())
 
-            # --- Пользователь выбрал ежеквартальную оплату ---
             if user_data[chat_id]["quarterly_payment"]:
                 try:
                     response_message = "Предварительный расчет страховой премии при ежеквартальной оплате:\n\n"
@@ -519,7 +528,6 @@ class TelegramBot:
                     self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
                     self.bot.delete_state(chat_id)
 
-            # --- Пользователь выбрал ОДНОРАЗОВУЮ оплату ---
             else:
                 self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
                 self.bot.delete_state(chat_id)
