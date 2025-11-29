@@ -479,6 +479,8 @@ class TelegramBot:
 
         if response in [strings.YES_BUTTON.lower(), strings.NO_BUTTON.lower()]:
             user_data[chat_id]["quarterly_payment"] = (response == strings.YES_BUTTON.lower())
+
+            # --- Пользователь выбрал ежеквартальную оплату ---
             if user_data[chat_id]["quarterly_payment"]:
                 try:
                     response_message = "Предварительный расчет страховой премии при ежеквартальной оплате:\n\n"
@@ -493,36 +495,39 @@ class TelegramBot:
                         if final_premium is not None:
                             final_premium = round(final_premium)
                             response_message += f"{program_name}: {final_premium} USD\n"
+                            has_results = True
+                        else:
+                            error_messages.append(f"{program_name}: {error_message}")
 
                     if has_results:
-                        response_message += "\nДля точного расчета обратитесь в страховую компанию."
+                        response_message += "\nДля точного расчета обратитесь к @StrahovanieMinsk"
                         if error_messages:
-                            response_message += "\n\nНе рассчитаны следующие программы:\n" + "\n".join(error_messages)
+                            response_message += "\n\nНе рассчитаны программы:\n" + "\n".join(error_messages)
                     else:
-                        response_message = strings.CALCULATION_ERROR.format("\n\nПричины:\n" + "\n".join(error_messages))
+                        response_message = strings.CALCULATION_ERROR.format(
+                            "\nПричины:\n" + "\n".join(error_messages)
+                        )
 
                     self.bot.send_message(chat_id, response_message, reply_markup=types.ReplyKeyboardRemove())
                     self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
                     self.bot.delete_state(chat_id)
+
                 except Exception as e:
                     print(f"Error in handle_quarterly_payment: {str(e)}")
-                    self.bot.send_message(chat_id, strings.CALCULATION_ERROR.format(str(e)), reply_markup=types.ReplyKeyboardRemove())
+                    self.bot.send_message(chat_id, strings.CALCULATION_ERROR.format(str(e)),
+                                          reply_markup=types.ReplyKeyboardRemove())
                     self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
                     self.bot.delete_state(chat_id)
+
+            # --- Пользователь выбрал ОДНОРАЗОВУЮ оплату ---
             else:
                 self.bot.send_message(chat_id, strings.THANK_YOU, reply_markup=types.ReplyKeyboardRemove())
                 self.bot.delete_state(chat_id)
+
         else:
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
             self.bot.send_message(chat_id, strings.INVALID_INPUT, reply_markup=markup)
-
-    def ask_quarterly_payment(self, message):
-        chat_id = message.chat.id
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(strings.YES_BUTTON, strings.NO_BUTTON)
-        self.bot.send_message(chat_id, strings.ASK_QUARTERLY_PAYMENT, reply_markup=markup)
-        self.bot.set_state(chat_id, BotState.ASK_QUARTERLY_PAYMENT)
 
     def run(self):
         print("Bot started...")
